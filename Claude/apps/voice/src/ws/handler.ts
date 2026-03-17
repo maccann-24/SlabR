@@ -4,7 +4,7 @@ import { getClientByTwilioPhone, ClientConfig } from '../lib/client-config.js';
 import { buildSystemPrompt } from './prompts.js';
 import { voiceTools, executeTool } from './tools.js';
 import { callSummaryNotification } from '../services/notifications.js';
-import { db, calls, leads, eq, and, notInArray } from '@serviceline/db';
+import { db, calls, leads } from '@serviceline/db';
 
 const MAX_HISTORY = 20;
 const MAX_TOOL_ITERATIONS = 5;
@@ -126,7 +126,7 @@ export async function handleWebSocket(ws: WebSocket) {
             source: 'voice',
             status: 'new',
           })
-          .onConflictDoNothing() // dedup on partial unique index
+          .onConflictDoNothing({ target: [leads.clientId, leads.contactPhone] })
           .returning();
         if (lead) {
           leadId = lead.id;
@@ -211,6 +211,7 @@ export async function handleWebSocket(ws: WebSocket) {
             toolBlock.name,
             toolBlock.input as Record<string, string>,
             clientRef,
+            leadId,
           );
           // Track state for call record
           if (toolBlock.name === 'book_appointment' && (result as { success?: boolean }).success) {
@@ -255,13 +256,26 @@ export async function handleWebSocket(ws: WebSocket) {
     // Wait for any in-flight message processing to complete
     await processing;
 
+    // Save call record FIRST (before summary) — ensures we never lose the record
     try {
-      // Generate call summary
-      let summary: string | null = null;
+      await db.insert(calls).values({
+        clientId: client.id,
+        callerPhone,
+        twilioCallSid: callSid,
+        status: 'answered_ai',
+        leadId,
+        appointmentBooked,
+        emergencyEscalated,
+      });
+    } catch (err) {
+      console.error('Failed to save call record:', err instanceof Error ? err.message : err);
+    }
+
+    // Then attempt summary + notification (best-effort, won't lose call record if this fails)
+    try {
       if (messageHistory.length > 2) {
         const anthropic = getOrCreateAnthropicClient();
         if (anthropic) {
-          // Truncate history for summarization to avoid token limits
           const historyForSummary = messageHistory.slice(0, 30);
           const res = await anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
@@ -275,33 +289,27 @@ export async function handleWebSocket(ws: WebSocket) {
           const textBlock = res.content.find(
             (b): b is Anthropic.TextBlock => b.type === 'text',
           );
-          summary = textBlock?.text || null;
+          const summary = textBlock?.text || null;
+
+          if (summary) {
+            // Patch summary into the call record
+            const { eq } = await import('drizzle-orm');
+            await db
+              .update(calls)
+              .set({ aiSummary: summary })
+              .where(eq(calls.twilioCallSid, callSid));
+
+            await callSummaryNotification(
+              client.ownerPhone,
+              client.twilioPhone,
+              summary,
+              callerPhone,
+            );
+          }
         }
       }
-
-      // Save call record
-      await db.insert(calls).values({
-        clientId: client.id,
-        callerPhone,
-        twilioCallSid: callSid,
-        status: 'answered_ai',
-        aiSummary: summary,
-        leadId,
-        appointmentBooked,
-        emergencyEscalated,
-      });
-
-      // Notify owner
-      if (summary) {
-        await callSummaryNotification(
-          client.ownerPhone,
-          client.twilioPhone,
-          summary,
-          callerPhone,
-        );
-      }
     } catch (err) {
-      console.error('Failed to save call record:', err instanceof Error ? err.message : err);
+      console.error('Failed to generate call summary:', err instanceof Error ? err.message : err);
     }
   });
 }

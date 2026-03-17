@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "idx_leads_client_phone" ON "leads" USING btree ("client_id","contact_phone");

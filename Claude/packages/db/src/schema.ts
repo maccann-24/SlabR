@@ -51,6 +51,7 @@ export const leads = pgTable('leads', {
 }, (table) => [
   index('idx_leads_drip').on(table.clientId, table.status, table.dripNextAt),
   index('idx_leads_client_created').on(table.clientId, table.createdAt),
+  uniqueIndex('idx_leads_client_phone').on(table.clientId, table.contactPhone),
 ]);
 
 export const conversations = pgTable('conversations', {

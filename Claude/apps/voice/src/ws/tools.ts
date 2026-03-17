@@ -66,6 +66,7 @@ export async function executeTool(
   name: string,
   input: ToolInput,
   client: ClientConfig,
+  leadId?: string | null,
 ): Promise<Record<string, unknown>> {
   switch (name) {
     case 'check_availability': {
@@ -99,11 +100,12 @@ export async function executeTool(
         return { error: 'Cannot book an appointment in the past. Please choose a future date and time.' };
       }
 
-      // Create appointment in DB
+      // Create appointment in DB — linked to lead if available
       const [appointment] = await db
         .insert(appointments)
         .values({
           clientId: client.id,
+          leadId: leadId || null,
           contactName: input.name,
           contactPhone: input.phone,
           contactAddress: input.address,
@@ -113,12 +115,16 @@ export async function executeTool(
         })
         .returning();
 
-      // Notify owner
-      await smsToOwner(
+      // Notify owner (best-effort — don't fail the booking if SMS fails)
+      try {
+        await smsToOwner(
         client.ownerPhone,
         client.twilioPhone,
         `📅 New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${scheduledDate.toLocaleString()}`,
-      );
+        );
+      } catch (smsErr) {
+        console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : smsErr);
+      }
 
       return {
         success: true,
@@ -133,11 +139,17 @@ export async function executeTool(
         return { error: 'Missing required fields for emergency escalation. Need: phone, issue' };
       }
 
-      await smsToOwner(
-        client.ownerPhone,
-        client.twilioPhone,
-        `🚨 EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`,
-      );
+      try {
+        await smsToOwner(
+          client.ownerPhone,
+          client.twilioPhone,
+          `🚨 EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`,
+        );
+      } catch (smsErr) {
+        console.error('EMERGENCY SMS failed:', smsErr instanceof Error ? smsErr.message : smsErr);
+        // Still return success — the caller shouldn't be told the SMS failed
+        // The call itself IS the escalation; SMS is supplementary
+      }
 
       return {
         success: true,

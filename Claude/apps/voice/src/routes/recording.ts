@@ -25,7 +25,20 @@ export const recordingRoutes: FastifyPluginAsync = async (app) => {
       try {
         const client = await getClientByTwilioPhone(To);
         if (client && From) {
-          // Create call record for voicemail
+          // Create or find lead
+          const [lead] = await db
+            .insert(leads)
+            .values({
+              clientId: client.id,
+              contactPhone: From,
+              source: 'voice',
+              status: 'new',
+              dripNextAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            })
+            .onConflictDoNothing({ target: [leads.clientId, leads.contactPhone] })
+            .returning();
+
+          // Create call record for voicemail — link to lead if we got one
           await db.insert(calls).values({
             clientId: client.id,
             callerPhone: From,
@@ -33,26 +46,22 @@ export const recordingRoutes: FastifyPluginAsync = async (app) => {
             status: 'voicemail',
             durationSeconds: RecordingDuration ? parseInt(RecordingDuration, 10) : null,
             recordingUrl: RecordingUrl || null,
+            leadId: lead?.id || null,
           });
 
-          // Create lead if one doesn't exist
-          await db
-            .insert(leads)
-            .values({
-              clientId: client.id,
-              contactPhone: From,
-              source: 'voice',
-              status: 'new',
-              dripNextAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
-            })
-            .onConflictDoNothing();
-
           // Notify owner about the voicemail
-          await smsToOwner(
-            client.ownerPhone,
-            client.twilioPhone,
-            `📞 New voicemail from ${From} (${RecordingDuration || '?'}s).\nListen: ${RecordingUrl || 'recording unavailable'}`,
-          );
+          try {
+            await smsToOwner(
+              client.ownerPhone,
+              client.twilioPhone,
+              `📞 New voicemail from ${From} (${RecordingDuration || '?'}s).\nListen: ${RecordingUrl || 'recording unavailable'}`,
+            );
+          } catch (smsErr) {
+            app.log.error(
+              { err: smsErr instanceof Error ? smsErr.message : smsErr },
+              'Failed to send voicemail notification SMS',
+            );
+          }
         }
       } catch (err) {
         app.log.error(
