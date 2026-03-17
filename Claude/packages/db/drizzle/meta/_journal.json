@@ -15,6 +15,13 @@
       "when": 1773718484635,
       "tag": "0001_cooing_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773723897111,
+      "tag": "0002_brown_blur",
+      "breakpoints": true
     }
   ]
 }

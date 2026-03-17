@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ClientConfig } from '../lib/client-config.js';
 import { isValidPhone } from '../lib/xml-utils.js';
 import { smsToOwner } from '../services/notifications.js';
+import { buildCallBrief, formatBriefForSms } from '../lib/call-brief.js';
 import { db, appointments } from '@serviceline/db';
 
 export const voiceTools: Anthropic.Tool[] = [
@@ -32,6 +33,9 @@ export const voiceTools: Anthropic.Tool[] = [
         address: { type: 'string', description: 'Service address' },
         issue: { type: 'string', description: 'Description of the issue' },
         datetime: { type: 'string', description: 'Appointment datetime in ISO 8601 format' },
+        notes: { type: 'string', description: 'Extra context from the conversation that would help the technician (e.g., "unit is 8 years old", "pilot light may be out", "tenant property")' },
+        special_instructions: { type: 'string', description: 'Special requests from the caller (e.g., "quote before any work", "call before arriving", "enter through side gate")' },
+        urgency: { type: 'string', enum: ['normal', 'same_day', 'emergency'], description: 'How urgent the job is' },
       },
       required: ['name', 'phone', 'address', 'issue', 'datetime'],
     },
@@ -61,6 +65,9 @@ interface ToolInput {
   address?: string;
   issue?: string;
   datetime?: string;
+  notes?: string;
+  special_instructions?: string;
+  urgency?: string;
 }
 
 export async function executeTool(
@@ -118,7 +125,19 @@ export async function executeTool(
         return { error: 'Cannot book an appointment in the past. Please choose a future date and time.' };
       }
 
-      // Create appointment in DB — linked to lead if available
+      // Build structured call brief
+      const brief = buildCallBrief({
+        customerName: input.name,
+        customerPhone: input.phone,
+        customerAddress: input.address,
+        issue: input.issue,
+        scheduledAt: scheduledDate,
+        urgency: (input.urgency as 'normal' | 'same_day' | 'emergency') || 'normal',
+        conversationNotes: input.notes ? [input.notes] : undefined,
+        specialInstructions: input.special_instructions ? [input.special_instructions] : undefined,
+      });
+
+      // Create appointment in DB — linked to lead, with brief attached
       const [appointment] = await db
         .insert(appointments)
         .values({
@@ -130,16 +149,17 @@ export async function executeTool(
           issueDescription: input.issue,
           scheduledAt: scheduledDate,
           status: 'scheduled',
+          urgency: input.urgency || 'normal',
+          customerNotes: input.notes || null,
+          specialInstructions: input.special_instructions || null,
+          brief,
         })
         .returning();
 
-      // Notify owner (best-effort — don't fail the booking if SMS fails)
+      // Send structured brief to owner via SMS
       try {
-        await smsToOwner(
-        client.ownerPhone,
-        client.twilioPhone,
-        `New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${scheduledDate.toLocaleString()}`,
-        );
+        const smsText = formatBriefForSms(brief);
+        await smsToOwner(client.ownerPhone, client.twilioPhone, smsText);
       } catch (smsErr) {
         console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
       }

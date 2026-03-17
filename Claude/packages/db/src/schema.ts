@@ -94,8 +94,13 @@ export const appointments = pgTable('appointments', {
   contactAddress: text('contact_address'),
   issueDescription: text('issue_description'),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
+  duration: integer('duration_minutes').default(60),
   googleEventId: text('google_event_id'),
   status: text('status').notNull().default('scheduled'),
+  urgency: text('urgency').default('normal'), // normal | same_day | emergency
+  customerNotes: text('customer_notes'), // extra context from the AI conversation
+  specialInstructions: text('special_instructions'), // e.g. "quote before work", "tenant property"
+  brief: jsonb('brief'), // structured briefing card (see CallBrief type)
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => [
   index('idx_appointments_client_scheduled').on(table.clientId, table.scheduledAt),
