@@ -18,6 +18,30 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 | **Pro** | $499/mo | Everything in Starter + AI voice agent with appointment booking + emergency triage + GEO/SEO automation + monthly visibility report |
 | **Setup fee** | $500 one-time | Phone number provisioning, calendar integration, Google Business Profile audit, schema markup, AI training on client's business |
 
+### Acquisition Hook: "14-Day Pilot + $1K Guarantee"
+
+**The pitch:** *"Let me put a number on your missed calls for 14 days — free. If the system doesn't rescue at least $1,000 in potential revenue in your first full month, that month is free too. You literally can't lose money on this."*
+
+**How it works:**
+1. **Free 14-day pilot** — full service, no credit card required. Operator sets up the client's phone number, AI voice agent, and text-back in 30 minutes. The pilot generates real Revenue Rescued data.
+2. **$1,000 Revenue Rescued Guarantee** — if the system doesn't rescue at least $1,000 in potential revenue (≈3 missed calls handled at $350 avg ticket) in the client's first paid month, that month is free. The math is heavily in our favor — any active HVAC/plumbing company gets 3+ missed calls per month.
+3. **No contract** — month-to-month billing. Cancel anytime.
+
+**Why this works for client acquisition:**
+- Eliminates every objection (no risk, no commitment, no upfront cost)
+- The pilot generates the Revenue Rescued screenshots we need for future sales
+- By day 14, the client has seen missed calls answered and leads booked — turning it off feels like losing money
+- The guarantee reframes the sale: we're not selling software, we're guaranteeing revenue
+
+**Implementation:**
+- Pilot clients are created in the system with `status: 'pilot'` and `pilot_ends_at: now() + 14 days`
+- All features are active during the pilot (Pro tier)
+- On day 12, automated SMS to operator: "Pilot for [client] ends in 2 days — review their Revenue Rescued data and schedule a conversion call"
+- On day 14, if not converted: service pauses, client gets a final SMS with their Revenue Rescued total and signup link
+- Guarantee tracking: if `revenue_metrics.estimated_revenue_rescued < 1000` at end of first paid month, Stripe invoice is credited automatically
+
+**Cost of a pilot:** ~$10 in Twilio/API costs. Negligible.
+
 ### Unit Economics
 
 | Item | Cost/Client/Month | Notes |
@@ -285,7 +309,9 @@ CREATE TABLE clients (
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   dashboard_pin TEXT NOT NULL,           -- bcrypt-hashed 4-6 digit PIN
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','churned')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('pilot','active','paused','churned')),
+  pilot_ends_at TIMESTAMPTZ,             -- null if not a pilot
+  guarantee_active BOOLEAN DEFAULT true,  -- $1K guarantee for first paid month
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -804,7 +830,8 @@ This architecture is designed for **1-30 clients**. At that scale:
 1. **Voice agent answers a missed call and books an appointment** end-to-end in under 60 seconds
 2. **Missed-call text-back fires within 10 seconds** of a no-answer
 3. **Revenue Rescued dashboard shows accurate data** matching call/lead/appointment records
-4. **First paying client onboarded** within 2 weeks of Phase 4 completion
-5. **5 paying clients** within 30 days of launch
+4. **First pilot client onboarded** within 1 week of Phase 2 completion (don't wait for the full product — the phone system alone is enough to pilot)
+5. **3 pilot clients running** before Phase 4 is done — generating real Revenue Rescued data
+6. **5 paying clients** within 30 days of launch
 6. **< 2% SMS delivery failure rate** (10DLC compliant)
 7. **Admin can onboard a new client in under 30 minutes** using the admin panel
