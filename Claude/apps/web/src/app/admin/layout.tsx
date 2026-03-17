@@ -13,7 +13,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="flex min-h-screen bg-[#0a0f1a]">
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 border-r border-slate-800 bg-[#060a14]">
         <div className="p-6">
@@ -53,7 +53,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto" style={{ background: "#0d1220" }}>
+      <main className="flex-1 overflow-auto bg-[#0d1220]">
         <div className="p-8">{children}</div>
       </main>
     </div>

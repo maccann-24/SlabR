@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen bg-[#0a0f1a]">
       {/* Nav */}
       <nav className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
         <div className="text-xl font-bold tracking-tight text-white">

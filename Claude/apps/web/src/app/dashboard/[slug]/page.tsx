@@ -43,7 +43,7 @@ export default function PinEntryPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0a0f1a]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white">

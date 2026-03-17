@@ -28,7 +28,7 @@ export default async function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen bg-[#0a0f1a]">
       {/* Top Nav */}
       <header className="border-b border-slate-800 bg-[#060a14]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
