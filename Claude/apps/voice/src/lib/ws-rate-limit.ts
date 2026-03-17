@@ -5,7 +5,10 @@
 
 const MAX_CONCURRENT_PER_IP = 3;
 const MAX_NEW_PER_MINUTE_PER_IP = 10;
+const MAX_TOTAL_CONNECTIONS = 100; // Global cap across all IPs
 const WINDOW_MS = 60_000;
+
+let totalActiveConnections = 0;
 
 interface IpRecord {
   active: number;
@@ -37,6 +40,11 @@ export function canAcceptWsConnection(ip: string): { allowed: boolean; reason?: 
   // Prune old timestamps
   record.timestamps = record.timestamps.filter((t) => now - t < WINDOW_MS);
 
+  // Global cap — prevents distributed DDoS from exhausting resources
+  if (totalActiveConnections >= MAX_TOTAL_CONNECTIONS) {
+    return { allowed: false, reason: `Server at maximum capacity (${MAX_TOTAL_CONNECTIONS} connections)` };
+  }
+
   if (record.active >= MAX_CONCURRENT_PER_IP) {
     return { allowed: false, reason: `Max ${MAX_CONCURRENT_PER_IP} concurrent WebSocket connections per IP` };
   }
@@ -56,6 +64,7 @@ export function trackWsConnect(ip: string): void {
   }
   record.active += 1;
   record.timestamps.push(Date.now());
+  totalActiveConnections += 1;
 }
 
 export function trackWsDisconnect(ip: string): void {
@@ -63,4 +72,5 @@ export function trackWsDisconnect(ip: string): void {
   if (record) {
     record.active = Math.max(0, record.active - 1);
   }
+  totalActiveConnections = Math.max(0, totalActiveConnections - 1);
 }
