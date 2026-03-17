@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { getClientByTwilioPhone } from '../lib/client-config.js';
+import { escapeXml } from '../lib/xml-utils.js';
 
 export const twimlRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { twilioPhone: string } }>('/twiml/:twilioPhone', async (req, reply) => {
@@ -13,8 +14,8 @@ export const twimlRoutes: FastifyPluginAsync = async (app) => {
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial action="${voiceServerUrl}/call-status" timeout="20">
-    <Number>${client.forwardPhone}</Number>
+  <Dial action="${escapeXml(voiceServerUrl)}/call-status" timeout="20">
+    <Number>${escapeXml(client.forwardPhone)}</Number>
   </Dial>
   <Say>We're sorry, please try again later.</Say>
 </Response>`;

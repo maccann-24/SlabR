@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { getClientByTwilioPhone } from '../lib/client-config.js';
+import { escapeXml } from '../lib/xml-utils.js';
 
 interface CallStatusBody {
   DialCallStatus: string;
@@ -82,11 +83,3 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
   });
 };
 
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}

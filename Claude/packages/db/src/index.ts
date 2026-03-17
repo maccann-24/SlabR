@@ -4,6 +4,14 @@ import * as schema from './schema.js';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected database pool error:', err.message);
 });
 
 export const db = drizzle(pool, { schema });

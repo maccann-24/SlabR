@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ClientConfig } from '../lib/client-config.js';
 import { smsToOwner } from '../services/notifications.js';
-import { db, appointments, leads } from '@serviceline/db';
+import { db, appointments } from '@serviceline/db';
 
 export const voiceTools: Anthropic.Tool[] = [
   {
@@ -69,6 +69,9 @@ export async function executeTool(
 ): Promise<Record<string, unknown>> {
   switch (name) {
     case 'check_availability': {
+      if (!input.date) {
+        return { error: 'Missing required field: date' };
+      }
       // TODO: integrate with Google Calendar API when OAuth tokens available
       // For now, return mock availability slots
       const slots = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM'];
@@ -80,16 +83,32 @@ export async function executeTool(
     }
 
     case 'book_appointment': {
+      // Validate required fields
+      if (!input.name || !input.phone || !input.address || !input.issue || !input.datetime) {
+        return { error: 'Missing required fields for booking. Need: name, phone, address, issue, datetime' };
+      }
+
+      // Validate datetime
+      const scheduledDate = new Date(input.datetime);
+      if (isNaN(scheduledDate.getTime())) {
+        return { error: `Invalid datetime format: "${input.datetime}". Please use ISO 8601 format like "2026-03-17T14:00:00".` };
+      }
+
+      // Don't book in the past
+      if (scheduledDate < new Date()) {
+        return { error: 'Cannot book an appointment in the past. Please choose a future date and time.' };
+      }
+
       // Create appointment in DB
       const [appointment] = await db
         .insert(appointments)
         .values({
           clientId: client.id,
-          contactName: input.name!,
-          contactPhone: input.phone!,
+          contactName: input.name,
+          contactPhone: input.phone,
           contactAddress: input.address,
           issueDescription: input.issue,
-          scheduledAt: new Date(input.datetime!),
+          scheduledAt: scheduledDate,
           status: 'scheduled',
         })
         .returning();
@@ -98,7 +117,7 @@ export async function executeTool(
       await smsToOwner(
         client.ownerPhone,
         client.twilioPhone,
-        `📅 New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${new Date(input.datetime!).toLocaleString()}`,
+        `📅 New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${scheduledDate.toLocaleString()}`,
       );
 
       return {
@@ -110,6 +129,10 @@ export async function executeTool(
     }
 
     case 'escalate_emergency': {
+      if (!input.phone || !input.issue) {
+        return { error: 'Missing required fields for emergency escalation. Need: phone, issue' };
+      }
+
       await smsToOwner(
         client.ownerPhone,
         client.twilioPhone,
