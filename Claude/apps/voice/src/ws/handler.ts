@@ -10,6 +10,7 @@ const MAX_HISTORY = 20;
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_CALL_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes of silence
+const MAX_WS_MESSAGE_BYTES = 64 * 1024; // 64 KB — ConversationRelay messages are small JSON
 
 // Per-session tool invocation limits
 const TOOL_RATE_LIMITS: Record<string, number> = {
@@ -85,6 +86,17 @@ export async function handleWebSocket(ws: WebSocket) {
 
   ws.on('message', (data) => {
     resetIdleTimer();
+
+    // Guard against oversized messages (DoS protection)
+    const rawLen = Buffer.isBuffer(data) ? data.length
+      : ArrayBuffer.isView(data) ? data.byteLength
+      : Array.isArray(data) ? data.reduce((s, b) => s + b.length, 0)
+      : String(data).length;
+    if (rawLen > MAX_WS_MESSAGE_BYTES) {
+      console.warn(`Dropping oversized WebSocket message (${rawLen} bytes)`);
+      return;
+    }
+
     // Queue message processing to prevent race conditions
     processing = processing.then(() => handleMessage(data)).catch((err) => {
       console.error('Unhandled error in message handler:', err instanceof Error ? err.message : 'Unknown error');
@@ -268,7 +280,9 @@ export async function handleWebSocket(ws: WebSocket) {
           }
         } catch (err) {
           console.error(`Tool ${toolBlock.name} failed:`, err instanceof Error ? err.message : 'Unknown error');
-          result = { error: `Tool execution failed: ${err instanceof Error ? err.message : 'unknown error'}. Please let the caller know and try an alternative approach.` };
+          // Do NOT leak raw error details to the LLM — they may contain DB/connection info
+          // that Claude could relay to the caller
+          result = { error: 'The operation could not be completed due to a temporary system issue. Please let the caller know and try an alternative approach.' };
         }
 
         toolResults.push({

@@ -12,14 +12,42 @@ interface RecordingBody {
   To?: string;
 }
 
+/**
+ * Validates that a recording URL is a legitimate Twilio recording URL.
+ * Prevents storage of arbitrary/phishing URLs in the database.
+ */
+function sanitizeRecordingUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    // Twilio recording URLs are always on api.twilio.com
+    if (!parsed.hostname.endsWith('.twilio.com')) {
+      return null;
+    }
+    if (parsed.protocol !== 'https:') {
+      return null;
+    }
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 export const recordingRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: RecordingBody }>('/recording-complete', async (req, reply) => {
-    const { RecordingUrl, RecordingSid, RecordingDuration, CallSid, From, To } = req.body;
+    const { RecordingUrl: rawRecordingUrl, RecordingSid, RecordingDuration, CallSid, From, To } = req.body;
+    const RecordingUrl = sanitizeRecordingUrl(rawRecordingUrl);
 
     app.log.info(
       { recordingSid: RecordingSid, duration: RecordingDuration },
       'Recording received',
     );
+
+    // Validate that string fields are actually strings (defense-in-depth for dev mode without Twilio validation)
+    if (CallSid && typeof CallSid !== 'string') {
+      reply.status(400).send('Invalid CallSid');
+      return;
+    }
 
     if (CallSid && To) {
       try {

@@ -11,7 +11,9 @@ const pool = new pg.Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected database pool error:', err.message);
+  // Scrub connection strings from error messages before logging
+  const safeMessage = err.message.replace(/postgresql?:\/\/[^\s]+/gi, 'postgres://***REDACTED***');
+  console.error('Unexpected database pool error:', safeMessage);
 });
 
 export const db = drizzle(pool, { schema });
@@ -19,3 +21,5 @@ export * from './schema.js';
 export { eq, and, or, desc, asc, sql, gte, lte, lt, gt, ne, inArray, notInArray, isNull, isNotNull, count } from 'drizzle-orm';
 export type DB = typeof db;
 export { encrypt, decrypt } from './encryption.js';
+export { storeOAuthTokens, getOAuthTokens, deleteOAuthTokens } from './tokens.js';
+export type { OAuthTokens } from './tokens.js';

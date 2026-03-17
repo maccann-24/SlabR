@@ -1,9 +1,14 @@
 import { FastifyPluginAsync } from 'fastify';
 import { getClientByTwilioPhone } from '../lib/client-config.js';
-import { escapeXml } from '../lib/xml-utils.js';
+import { escapeXml, isValidPhone } from '../lib/xml-utils.js';
 
 export const twimlRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { twilioPhone: string } }>('/twiml/:twilioPhone', async (req, reply) => {
+    // Validate phone format before hitting DB
+    if (!isValidPhone(req.params.twilioPhone)) {
+      reply.status(400).send('Invalid phone number format');
+      return;
+    }
     const client = await getClientByTwilioPhone(req.params.twilioPhone);
     if (!client) {
       reply.status(404).send('Unknown phone number');

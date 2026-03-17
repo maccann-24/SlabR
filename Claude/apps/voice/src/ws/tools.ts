@@ -74,6 +74,10 @@ export async function executeTool(
       if (!input.date) {
         return { error: 'Missing required field: date' };
       }
+      // Validate date format (YYYY-MM-DD) and parsability
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || isNaN(new Date(input.date).getTime())) {
+        return { error: `Invalid date format: "${input.date}". Please use YYYY-MM-DD format.` };
+      }
       // TODO: integrate with Google Calendar API when OAuth tokens available
       // For now, return mock availability slots
       const slots = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM'];
@@ -88,6 +92,14 @@ export async function executeTool(
       // Validate required fields
       if (!input.name || !input.phone || !input.address || !input.issue || !input.datetime) {
         return { error: 'Missing required fields for booking. Need: name, phone, address, issue, datetime' };
+      }
+
+      // Enforce length limits on free-text fields
+      const MAX_NAME_LEN = 200;
+      const MAX_ADDRESS_LEN = 500;
+      const MAX_ISSUE_LEN = 1000;
+      if (input.name.length > MAX_NAME_LEN || input.address.length > MAX_ADDRESS_LEN || input.issue.length > MAX_ISSUE_LEN) {
+        return { error: 'One or more fields exceed maximum length. Please provide shorter values.' };
       }
 
       // Validate phone number format
@@ -143,6 +155,11 @@ export async function executeTool(
     case 'escalate_emergency': {
       if (!input.phone || !input.issue) {
         return { error: 'Missing required fields for emergency escalation. Need: phone, issue' };
+      }
+
+      // Enforce length limits on free-text fields
+      if ((input.issue && input.issue.length > 1000) || (input.address && input.address.length > 500) || (input.name && input.name.length > 200)) {
+        return { error: 'One or more fields exceed maximum length.' };
       }
 
       // Validate phone number format

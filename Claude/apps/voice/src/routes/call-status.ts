@@ -14,6 +14,18 @@ interface CallStatusBody {
 export const callStatusRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: CallStatusBody }>('/call-status', async (req, reply) => {
     const { DialCallStatus, To, From, CallSid } = req.body;
+
+    // Validate required fields are present and are strings
+    if (
+      typeof DialCallStatus !== 'string' ||
+      typeof To !== 'string' ||
+      typeof From !== 'string' ||
+      typeof CallSid !== 'string'
+    ) {
+      reply.status(400).send('Missing or invalid required fields');
+      return;
+    }
+
     const client = await getClientByTwilioPhone(To);
 
     if (!client) {
@@ -75,17 +87,21 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
             clientId: client.id,
           });
 
-          const n8nSecret = process.env.N8N_WEBHOOK_SECRET || 'dev-secret';
-          const sig = createHmac('sha256', n8nSecret).update(payload).digest('hex');
+          const n8nSecret = process.env.N8N_WEBHOOK_SECRET;
+          if (!n8nSecret) {
+            app.log.error('N8N_WEBHOOK_SECRET not set — skipping text-back webhook (refusing to sign with default secret)');
+          } else {
+            const sig = createHmac('sha256', n8nSecret).update(payload).digest('hex');
 
-          fetch(n8nUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Webhook-Signature': sig,
-            },
-            body: payload,
-          }).catch((err) => app.log.error({ err }, 'Failed to trigger text-back webhook'));
+            fetch(n8nUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Webhook-Signature': sig,
+              },
+              body: payload,
+            }).catch((err) => app.log.error({ err }, 'Failed to trigger text-back webhook'));
+          }
         }
 
         reply.type('text/xml').send(twiml);

@@ -149,4 +149,18 @@ const shutdown = async (signal: string) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
+// Catch unhandled rejections/exceptions — log and exit cleanly rather than crashing silently
+process.on('unhandledRejection', (reason) => {
+  app.log.error({ err: reason instanceof Error ? reason.message : String(reason) }, 'Unhandled promise rejection');
+  // In production, exit to let the process manager restart cleanly
+  if (process.env.NODE_ENV === 'production') {
+    shutdown('unhandledRejection');
+  }
+});
+
+process.on('uncaughtException', (err) => {
+  app.log.error({ err: err.message }, 'Uncaught exception — shutting down');
+  shutdown('uncaughtException');
+});
+
 export { app };
