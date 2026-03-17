@@ -1,0 +1,16 @@
+{
+  "target": "ServiceLine AI — AI voice agent + GEO/SEO platform for HVAC/plumbing companies. Fastify voice server (Twilio ConversationRelay + Claude Haiku), Next.js admin panel + client dashboard, PostgreSQL via Drizzle ORM, n8n workflow automation. Handles PII (phone numbers, addresses, names), processes voice calls, SMS, and Google OAuth tokens.",
+  "status": "in_progress",
+  "depth": "comprehensive",
+  "compliance_frameworks": ["owasp"],
+  "current_step": "checkpoint-1",
+  "current_phase": 1,
+  "completed_steps": [1, 2, 3],
+  "files_created": [
+    ".security-hardening/01-vulnerability-scan.md",
+    ".security-hardening/02-threat-model.md",
+    ".security-hardening/03-architecture-review.md"
+  ],
+  "started_at": "2026-03-17T00:10:00Z",
+  "last_updated": "2026-03-17T00:45:00Z"
+}

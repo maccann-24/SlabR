@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ClientConfig } from '../lib/client-config.js';
+import { isValidPhone } from '../lib/xml-utils.js';
 import { smsToOwner } from '../services/notifications.js';
 import { db, appointments } from '@serviceline/db';
 
@@ -89,6 +90,11 @@ export async function executeTool(
         return { error: 'Missing required fields for booking. Need: name, phone, address, issue, datetime' };
       }
 
+      // Validate phone number format
+      if (!isValidPhone(input.phone)) {
+        return { error: `Invalid phone number format: "${input.phone}". Phone must be in E.164 format (e.g., +15551234567).` };
+      }
+
       // Validate datetime
       const scheduledDate = new Date(input.datetime);
       if (isNaN(scheduledDate.getTime())) {
@@ -120,10 +126,10 @@ export async function executeTool(
         await smsToOwner(
         client.ownerPhone,
         client.twilioPhone,
-        `📅 New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${scheduledDate.toLocaleString()}`,
+        `New appointment booked!\nCustomer: ${input.name}\nPhone: ${input.phone}\nAddress: ${input.address}\nIssue: ${input.issue}\nTime: ${scheduledDate.toLocaleString()}`,
         );
       } catch (smsErr) {
-        console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : smsErr);
+        console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
       }
 
       return {
@@ -139,14 +145,19 @@ export async function executeTool(
         return { error: 'Missing required fields for emergency escalation. Need: phone, issue' };
       }
 
+      // Validate phone number format
+      if (!isValidPhone(input.phone)) {
+        return { error: `Invalid phone number format: "${input.phone}". Phone must be in E.164 format (e.g., +15551234567).` };
+      }
+
       try {
         await smsToOwner(
           client.ownerPhone,
           client.twilioPhone,
-          `🚨 EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`,
+          `EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`,
         );
       } catch (smsErr) {
-        console.error('EMERGENCY SMS failed:', smsErr instanceof Error ? smsErr.message : smsErr);
+        console.error('EMERGENCY SMS failed:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
         // Still return success — the caller shouldn't be told the SMS failed
         // The call itself IS the escalation; SMS is supplementary
       }

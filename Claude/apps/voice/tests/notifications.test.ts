@@ -74,9 +74,11 @@ describe('notifications service', () => {
       delete process.env.TWILIO_AUTH_TOKEN;
     });
 
-    it('logs to console with customer phone', async () => {
+    it('logs to console with redacted customer phone (last 4 digits visible)', async () => {
       await smsToCustomer('+15553333333', '+15554444444', 'Hi');
-      expect(consoleSpy.mock.calls[0][0]).toContain('+15553333333');
+      // Phone should be redacted but show last 4 digits
+      expect(consoleSpy.mock.calls[0][0]).toContain('3333');
+      expect(consoleSpy.mock.calls[0][0]).not.toContain('+15553333333');
     });
   });
 

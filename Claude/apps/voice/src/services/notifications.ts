@@ -10,10 +10,19 @@ function getTwilioClient() {
   return twilio(sid, token);
 }
 
+/**
+ * Redact phone numbers for log output — preserves last 4 digits.
+ * e.g. +15551234567 -> +1***###4567
+ */
+export function redactPhone(phone: string): string {
+  if (phone.length <= 4) return '****';
+  return phone.slice(0, -4).replace(/\d/g, '*') + phone.slice(-4);
+}
+
 export async function smsToOwner(ownerPhone: string, fromPhone: string, message: string) {
   const client = getTwilioClient();
   if (!client) {
-    console.log(`[DEV SMS → Owner ${ownerPhone}] ${message}`);
+    console.log(`[DEV SMS -> Owner ${redactPhone(ownerPhone)}] ${message}`);
     return;
   }
   await client.messages.create({ to: ownerPhone, from: fromPhone, body: message });
@@ -22,7 +31,7 @@ export async function smsToOwner(ownerPhone: string, fromPhone: string, message:
 export async function smsToCustomer(customerPhone: string, fromPhone: string, message: string) {
   const client = getTwilioClient();
   if (!client) {
-    console.log(`[DEV SMS → Customer ${customerPhone}] ${message}`);
+    console.log(`[DEV SMS -> Customer ${redactPhone(customerPhone)}] ${message}`);
     return;
   }
   await client.messages.create({ to: customerPhone, from: fromPhone, body: message });
@@ -34,6 +43,6 @@ export async function callSummaryNotification(
   summary: string,
   callerPhone: string,
 ) {
-  const message = `📞 Missed call handled by AI\nCaller: ${callerPhone}\n\n${summary}`;
+  const message = `Missed call handled by AI\nCaller: ${callerPhone}\n\n${summary}`;
   await smsToOwner(ownerPhone, fromPhone, message);
 }

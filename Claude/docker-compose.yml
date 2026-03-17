@@ -1,12 +1,14 @@
+# LOCAL DEVELOPMENT ONLY
+# Do not expose this compose file or these credentials in any production environment.
 version: '3.8'
 services:
   postgres:
     image: postgres:16
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: serviceline
-      POSTGRES_PASSWORD: serviceline
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-serviceline}
       POSTGRES_DB: serviceline
     volumes:
       - pg_data:/var/lib/postgresql/data

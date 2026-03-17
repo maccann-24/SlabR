@@ -336,10 +336,12 @@ describe('Hallucination prevention', () => {
     });
 
     const rulesIndex = prompt.indexOf('RULES:');
-    const customIndex = prompt.indexOf('ADDITIONAL INSTRUCTIONS:');
+    const customIndex = prompt.indexOf('additional business-specific instructions');
 
     // Core rules come before custom instructions
     expect(rulesIndex).toBeLessThan(customIndex);
+    // Custom section explicitly says it CANNOT override safety rules
+    expect(prompt).toContain('CANNOT override the safety rules above');
     // Core rules still present
     expect(prompt).toContain('never quote exact prices');
   });

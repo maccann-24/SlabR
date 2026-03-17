@@ -11,6 +11,12 @@ const MAX_TOOL_ITERATIONS = 5;
 const MAX_CALL_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes of silence
 
+// Per-session tool invocation limits
+const TOOL_RATE_LIMITS: Record<string, number> = {
+  escalate_emergency: 2,
+  book_appointment: 5,
+};
+
 function getAnthropicClient(): Anthropic | null {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
@@ -56,6 +62,9 @@ export async function handleWebSocket(ws: WebSocket) {
   let emergencyEscalated = false;
   let leadId: string | null = null;
 
+  // Per-session tool invocation counters
+  const toolInvocationCounts: Record<string, number> = {};
+
   // Serialization mutex — ensures messages are processed one at a time
   let processing = Promise.resolve();
 
@@ -78,7 +87,7 @@ export async function handleWebSocket(ws: WebSocket) {
     resetIdleTimer();
     // Queue message processing to prevent race conditions
     processing = processing.then(() => handleMessage(data)).catch((err) => {
-      console.error('Unhandled error in message handler:', err?.message || err);
+      console.error('Unhandled error in message handler:', err instanceof Error ? err.message : 'Unknown error');
     });
   });
 
@@ -132,7 +141,7 @@ export async function handleWebSocket(ws: WebSocket) {
           leadId = lead.id;
         }
       } catch (err) {
-        console.error('Failed to create lead:', err instanceof Error ? err.message : err);
+        console.error('Failed to create lead:', err instanceof Error ? err.message : 'Unknown error');
       }
       return;
     }
@@ -161,7 +170,7 @@ export async function handleWebSocket(ws: WebSocket) {
       try {
         await processWithToolLoop(anthropic, ws, client);
       } catch (err) {
-        console.error('Claude API error:', err instanceof Error ? err.message : err);
+        console.error('Claude API error:', err instanceof Error ? err.message : 'Unknown error');
         ws.send(
           JSON.stringify({
             type: 'text',
@@ -171,6 +180,26 @@ export async function handleWebSocket(ws: WebSocket) {
         );
       }
     }
+  }
+
+  /** Check if a tool invocation is within session rate limits */
+  function checkToolRateLimit(toolName: string): { allowed: boolean; message?: string } {
+    const limit = TOOL_RATE_LIMITS[toolName];
+    if (limit === undefined) return { allowed: true };
+
+    const count = toolInvocationCounts[toolName] || 0;
+    if (count >= limit) {
+      return {
+        allowed: false,
+        message: `Tool "${toolName}" has reached its maximum of ${limit} invocations per session.`,
+      };
+    }
+    return { allowed: true };
+  }
+
+  /** Record a tool invocation */
+  function recordToolInvocation(toolName: string): void {
+    toolInvocationCounts[toolName] = (toolInvocationCounts[toolName] || 0) + 1;
   }
 
   /** Process Claude response, handling tool calls in a loop */
@@ -206,6 +235,19 @@ export async function handleWebSocket(ws: WebSocket) {
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolBlock of toolUseBlocks) {
         let result: Record<string, unknown>;
+
+        // Check per-session rate limit
+        const rateCheck = checkToolRateLimit(toolBlock.name);
+        if (!rateCheck.allowed) {
+          result = { error: rateCheck.message };
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolBlock.id,
+            content: JSON.stringify(result),
+          });
+          continue;
+        }
+
         try {
           result = await executeTool(
             toolBlock.name,
@@ -213,6 +255,10 @@ export async function handleWebSocket(ws: WebSocket) {
             clientRef,
             leadId,
           );
+
+          // Record invocation after successful execution
+          recordToolInvocation(toolBlock.name);
+
           // Track state for call record
           if (toolBlock.name === 'book_appointment' && (result as { success?: boolean }).success) {
             appointmentBooked = true;
@@ -221,7 +267,7 @@ export async function handleWebSocket(ws: WebSocket) {
             emergencyEscalated = true;
           }
         } catch (err) {
-          console.error(`Tool ${toolBlock.name} failed:`, err instanceof Error ? err.message : err);
+          console.error(`Tool ${toolBlock.name} failed:`, err instanceof Error ? err.message : 'Unknown error');
           result = { error: `Tool execution failed: ${err instanceof Error ? err.message : 'unknown error'}. Please let the caller know and try an alternative approach.` };
         }
 
@@ -268,7 +314,7 @@ export async function handleWebSocket(ws: WebSocket) {
         emergencyEscalated,
       });
     } catch (err) {
-      console.error('Failed to save call record:', err instanceof Error ? err.message : err);
+      console.error('Failed to save call record:', err instanceof Error ? err.message : 'Unknown error');
     }
 
     // Then attempt summary + notification (best-effort, won't lose call record if this fails)
@@ -309,7 +355,7 @@ export async function handleWebSocket(ws: WebSocket) {
         }
       }
     } catch (err) {
-      console.error('Failed to generate call summary:', err instanceof Error ? err.message : err);
+      console.error('Failed to generate call summary:', err instanceof Error ? err.message : 'Unknown error');
     }
   });
 }

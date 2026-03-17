@@ -37,6 +37,8 @@ describe('POST /call-status', () => {
   const app = Fastify();
 
   beforeAll(async () => {
+    // Required for generateWsToken in call-status route
+    process.env.TWILIO_AUTH_TOKEN = 'test-auth-token';
     app.register(formbody);
     app.register(callStatusRoutes);
     await app.ready();

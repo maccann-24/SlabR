@@ -8,10 +8,15 @@
  * Each test ensures we do the good parts well WITHOUT opening negative paths.
  * Cross-referenced against horror-stories.test.ts to verify balance.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { buildSystemPrompt } from '../src/ws/prompts.js';
 import { voiceTools } from '../src/ws/tools.js';
 import { escapeXml } from '../src/lib/xml-utils.js';
+
+// Required for call-status route tests (generateWsToken needs TWILIO_AUTH_TOKEN)
+beforeAll(() => {
+  process.env.TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || 'test-auth-token';
+});
 
 // ==========================================================================
 // SUCCESS FACTOR 1: Direct Booking on the Call
@@ -245,7 +250,7 @@ describe('White-label personalization — callers hear YOUR brand', () => {
     });
 
     const rulesIdx = prompt.indexOf('RULES:');
-    const customIdx = prompt.indexOf('ADDITIONAL INSTRUCTIONS:');
+    const customIdx = prompt.indexOf('additional business-specific instructions');
     expect(rulesIdx).toBeGreaterThan(-1);
     expect(customIdx).toBeGreaterThan(rulesIdx);
   });

@@ -1,6 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
+import { createHmac } from 'crypto';
 import { getClientByTwilioPhone } from '../lib/client-config.js';
 import { escapeXml } from '../lib/xml-utils.js';
+import { generateWsToken } from '../lib/ws-auth.js';
 
 interface CallStatusBody {
   DialCallStatus: string;
@@ -31,6 +33,11 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
         // Pro: hand to AI voice agent via ConversationRelay
         const voiceServerUrl = process.env.VOICE_SERVER_URL || 'ws://localhost:3001';
         const wsUrl = voiceServerUrl.replace(/^http/, 'ws') + '/ws';
+
+        // Generate HMAC auth token for WebSocket connection
+        const { token, ts } = generateWsToken(CallSid);
+        const authenticatedWsUrl = `${wsUrl}?token=${token}&ts=${ts}&callSid=${CallSid}`;
+
         const consentPrefix = client.recordingConsentRequired
           ? 'This call may be recorded for quality purposes. '
           : '';
@@ -40,7 +47,7 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
 <Response>
   <Connect>
     <ConversationRelay
-      url="${wsUrl}"
+      url="${escapeXml(authenticatedWsUrl)}"
       welcomeGreeting="${escapeXml(greeting)}"
       voice="en-US-Journey-F"
       ttsProvider="google"
@@ -58,18 +65,26 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
   <Record maxLength="120" action="/recording-complete" />
 </Response>`;
 
-        // Fire text-back webhook to n8n asynchronously
+        // Fire text-back webhook to n8n asynchronously with HMAC signature
         const n8nUrl = process.env.N8N_TEXTBACK_WEBHOOK_URL;
         if (n8nUrl) {
+          const payload = JSON.stringify({
+            twilioPhone: To,
+            callerPhone: From,
+            callSid: CallSid,
+            clientId: client.id,
+          });
+
+          const n8nSecret = process.env.N8N_WEBHOOK_SECRET || 'dev-secret';
+          const sig = createHmac('sha256', n8nSecret).update(payload).digest('hex');
+
           fetch(n8nUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              twilioPhone: To,
-              callerPhone: From,
-              callSid: CallSid,
-              clientId: client.id,
-            }),
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Webhook-Signature': sig,
+            },
+            body: payload,
           }).catch((err) => app.log.error({ err }, 'Failed to trigger text-back webhook'));
         }
 
@@ -82,4 +97,3 @@ export const callStatusRoutes: FastifyPluginAsync = async (app) => {
     reply.type('text/xml').send('<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>');
   });
 };
-
