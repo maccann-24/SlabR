@@ -48,8 +48,15 @@ interface ConversationRelayPrompt {
   voicePrompt: string;
 }
 
+interface ConversationRelayInterrupt {
+  type: 'interrupt';
+  utteranceUntilInterrupt: string;
+  durationUntilInterruptMs: number;
+}
+
 type ConversationRelayMessage =
   | ConversationRelaySetup
+  | ConversationRelayInterrupt
   | ConversationRelayPrompt
   | { type: string };
 
@@ -158,6 +165,31 @@ export async function handleWebSocket(ws: WebSocket) {
       return;
     }
 
+    // Handle interruptions — caller spoke while AI was talking
+    if (msg.type === 'interrupt') {
+      const interrupt = msg as ConversationRelayInterrupt;
+      // Truncate the last assistant message to what the caller actually heard
+      const lastAssistantIdx = messageHistory.findLastIndex(
+        (m) => m.role === 'assistant',
+      );
+      if (lastAssistantIdx !== -1 && interrupt.utteranceUntilInterrupt) {
+        const entry = messageHistory[lastAssistantIdx];
+        if (typeof entry.content === 'string') {
+          const cutIdx = entry.content.indexOf(interrupt.utteranceUntilInterrupt);
+          if (cutIdx !== -1) {
+            messageHistory[lastAssistantIdx] = {
+              role: 'assistant',
+              content: entry.content.substring(
+                0,
+                cutIdx + interrupt.utteranceUntilInterrupt.length,
+              ),
+            };
+          }
+        }
+      }
+      return; // The caller's next words will come as a 'prompt' message
+    }
+
     if (msg.type === 'prompt') {
       if (!client) return; // No valid client — ignore
 
@@ -219,7 +251,7 @@ export async function handleWebSocket(ws: WebSocket) {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
       const response = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
+        max_tokens: 150,
         system: systemPrompt,
         tools: voiceTools,
         messages: messageHistory,

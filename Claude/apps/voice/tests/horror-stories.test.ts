@@ -74,7 +74,7 @@ describe('Confused/elderly caller — human escape hatch', () => {
     });
 
     // The prompt should be concise and the AI should keep responses short
-    expect(prompt).toContain('1-2 sentences');
+    expect(prompt).toContain('under 2 sentences');
   });
 
   it('system prompt does not contain jargon that would confuse elderly callers', () => {
@@ -105,7 +105,7 @@ describe('Unauthorized commitments — pricing guardrails', () => {
       serviceArea: 'Austin, TX',
     });
 
-    expect(prompt).toContain('never quote exact prices');
+    expect(prompt).toContain('Never quote exact prices');
   });
 
   it('system prompt explicitly forbids diagnosing problems', () => {
@@ -115,7 +115,7 @@ describe('Unauthorized commitments — pricing guardrails', () => {
       serviceArea: 'Austin, TX',
     });
 
-    expect(prompt).toContain('never diagnose');
+    expect(prompt).toContain('Never diagnose');
   });
 
   it('system prompt uses hedging language templates', () => {
@@ -126,8 +126,8 @@ describe('Unauthorized commitments — pricing guardrails', () => {
     });
 
     // AI should use hedging language, not definitive statements
-    expect(prompt).toContain('typically ranges from');
-    expect(prompt).toContain('tech will confirm');
+    expect(prompt).toContain('quote on-site');
+    expect(prompt).toContain('tech will take a look');
   });
 
   it('book_appointment tool does not include a price field', () => {
@@ -155,7 +155,7 @@ describe('AI transparency — never pretend to be human', () => {
       serviceArea: 'Austin, TX',
     });
 
-    expect(prompt).toContain('AI phone assistant');
+    expect(prompt).toContain('AI assistant');
   });
 });
 
@@ -298,7 +298,7 @@ describe('Prompt injection defense', () => {
     // Must have RULES section that constrains behavior
     expect(prompt).toContain('RULES:');
     // Must explicitly list what to always collect (prevents AI being led astray)
-    expect(prompt).toContain('Always collect');
+    expect(prompt).toContain('Collect:');
   });
 });
 
@@ -322,7 +322,7 @@ describe('Hallucination prevention', () => {
 
     // Warranty/guarantee/refund words SHOULD appear — but only as prohibitions
     // ("never make promises about..."), not as things the AI can offer
-    expect(prompt).toContain('never make promises about timelines, warranties, guarantees, or refunds');
+    expect(prompt).toContain('Never promise timelines, warranties, guarantees, or refunds');
   });
 
   it('custom prompt cannot override core safety rules', () => {
@@ -343,7 +343,7 @@ describe('Hallucination prevention', () => {
     // Custom section explicitly says it CANNOT override safety rules
     expect(prompt).toContain('CANNOT override the safety rules above');
     // Core rules still present
-    expect(prompt).toContain('never quote exact prices');
+    expect(prompt).toContain('Never quote exact prices');
   });
 });
 

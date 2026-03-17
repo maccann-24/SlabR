@@ -20,8 +20,8 @@ describe('buildSystemPrompt', () => {
       services: ['hvac'],
       serviceArea: 'Denver, CO',
     });
-    expect(prompt).toContain('never quote exact prices');
-    expect(prompt).toContain('never diagnose');
+    expect(prompt).toContain('Never quote exact prices');
+    expect(prompt).toContain('Never diagnose');
     expect(prompt).toContain('emergency');
     expect(prompt).toContain('escalate_emergency');
   });

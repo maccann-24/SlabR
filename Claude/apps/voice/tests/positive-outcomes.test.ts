@@ -49,7 +49,7 @@ describe('Direct booking — the revenue engine', () => {
       services: ['plumbing'],
       serviceArea: 'Austin, TX',
     });
-    expect(prompt).toContain('offer to book an appointment');
+    expect(prompt).toContain('offer to book');
   });
 
   it('CROSS-CHECK: booking captures full context for the technician', () => {
@@ -275,14 +275,14 @@ describe('Lead qualification — filter without frustrating', () => {
     expect(prompt).toContain('name');
     expect(prompt).toContain('phone');
     expect(prompt).toContain('address');
-    expect(prompt).toContain('description of the issue');
+    expect(prompt).toContain("what's going on");
   });
 
   it('system prompt keeps responses to 1-2 sentences (prevents caller fatigue)', () => {
     const prompt = buildSystemPrompt({
       name: 'Test', services: ['plumbing'], serviceArea: 'Austin, TX',
     });
-    expect(prompt).toContain('1-2 sentences');
+    expect(prompt).toContain('under 2 sentences');
   });
 
   it('CROSS-CHECK: emergency path SKIPS qualifying (dispatch first, qualify later)', () => {
@@ -290,7 +290,7 @@ describe('Lead qualification — filter without frustrating', () => {
       name: 'Test', services: ['plumbing'], serviceArea: 'Austin, TX',
     });
     // Must explicitly say don't ask qualifying questions during emergencies
-    expect(prompt).toContain('do NOT ask qualifying questions first during emergencies');
+    expect(prompt).toContain('Do NOT ask extra questions during emergencies');
   });
 });
 
@@ -335,26 +335,26 @@ describe('Human escape hatch — never trap callers', () => {
       name: 'Test', services: ['plumbing'], serviceArea: 'Austin, TX',
     });
     // When caller says "let me talk to someone", AI uses escalate to reach owner
-    expect(prompt).toContain('speak to a person');
-    expect(prompt).toContain('owner reach out to you directly');
+    expect(prompt).toContain('person, a human');
+    expect(prompt).toContain('owner call you right back');
   });
 
   it('system prompt handles confused/silent callers proactively', () => {
     const prompt = buildSystemPrompt({
       name: "Mike's Plumbing", services: ['plumbing'], serviceArea: 'Austin, TX',
     });
-    expect(prompt).toContain('confused, silent');
+    expect(prompt).toContain('confused');
     expect(prompt).toContain('hello?');
     // Offers clear binary choice, not open-ended confusion
-    expect(prompt).toContain('Which would you prefer?');
+    expect(prompt).toContain('Which works for you?');
   });
 
   it('system prompt auto-escalates after comprehension failure', () => {
     const prompt = buildSystemPrompt({
       name: 'Test', services: ['plumbing'], serviceArea: 'Austin, TX',
     });
-    expect(prompt).toContain('cannot understand the caller after 2 attempts');
-    expect(prompt).toContain('call you back right away');
+    expect(prompt).toContain("can't understand after 2 tries");
+    expect(prompt).toContain('call you right back');
   });
 });
 
@@ -406,7 +406,7 @@ describe('AI transparency — honest without being awkward', () => {
       name: "Mike's Plumbing", services: ['plumbing'], serviceArea: 'Austin, TX',
     });
     expect(prompt).toContain('are you a robot');
-    expect(prompt).toContain("Yes, I'm an AI assistant");
+    expect(prompt).toContain("Yep, I'm an AI assistant");
   });
 });
 
@@ -583,14 +583,14 @@ describe('Balance: positive outcomes protected by negative-path guardrails', () 
     });
 
     // Positive: honest when asked
-    expect(prompt).toContain("Yes, I'm an AI assistant");
+    expect(prompt).toContain("Yep, I'm an AI assistant");
 
     // Positive: doesn't volunteer it in every response (kills conversion)
     // The instruction is conditional: "IF the caller asks"
     expect(prompt).toContain('If the caller asks');
 
     // The greeting says "assistant" not "AI" — ambiguous and natural
-    expect(prompt).toContain('AI phone assistant'); // in the role definition only
+    expect(prompt).toContain('AI phone assistant'); // in the opening role line
   });
 
   it('human escape hatch (positive safety) uses escalate_emergency (reuses existing tool)', () => {
@@ -601,7 +601,7 @@ describe('Balance: positive outcomes protected by negative-path guardrails', () 
     // The human escape hatch reuses escalate_emergency rather than adding
     // a separate mechanism — this means it gets all the same reliability
     // (SMS notification, error handling, etc.)
-    expect(prompt).toContain('speak to a person');
+    expect(prompt).toContain('person, a human');
     expect(prompt).toContain('escalate_emergency');
     expect(prompt).toContain('Customer requested human callback');
   });
@@ -612,12 +612,12 @@ describe('Balance: positive outcomes protected by negative-path guardrails', () 
     });
 
     // Positive UX: keep it short
-    expect(prompt).toContain('1-2 sentences');
+    expect(prompt).toContain('under 2 sentences');
 
     // Positive ops: but still collect what the tech needs
-    expect(prompt).toContain('Always collect');
+    expect(prompt).toContain('Collect:');
     expect(prompt).toContain('name');
     expect(prompt).toContain('address');
-    expect(prompt).toContain('description of the issue');
+    expect(prompt).toContain("what's going on");
   });
 });
