@@ -735,18 +735,22 @@ Before sending any SMS, we must register with The Campaign Registry (TCR) throug
 
 ## Development Phases
 
-### Phase 1: Foundation (Week 1)
+### Phase 1: Foundation (Week 1) — COMPLETE ✅
 - Project scaffolding (monorepo: `apps/voice`, `apps/web`, `packages/db`)
-- PostgreSQL schema + migrations
-- Railway project setup (Postgres, services)
-- Twilio account + first test phone number
-- Basic Fastify voice server with ConversationRelay "hello world"
+- PostgreSQL schema + migrations (12 tables: clients, leads, calls, appointments, conversations, reviews, geo_audits, revenue_metrics, google_oauth_tokens, on_call_contacts, on_call_schedule, escalations)
+- Fastify voice server with ConversationRelay, TwiML routing, WebSocket handler
+- Claude Haiku voice agent with 3 tools (check_availability, book_appointment, escalate_emergency)
+- Security hardening: HMAC WebSocket auth, Twilio signature validation, rate limiting, Helmet, CORS, AES-256-GCM token encryption, prompt injection sanitization
+- Anti-rambling: dispatcher tone prompt, 35-word/2-sentence limit, interrupt handling, max_tokens=150
+- Call briefing cards: structured briefs with urgency, notes, special instructions, SMS delivery
+- On-call routing: schedule-based notification routing with timed escalation to owner
+- 172 tests across 12 files (edge cases, horror stories, positive outcomes, anti-rambling, security)
 
-### Phase 2: Core Phone System (Week 2)
-- AI voice agent with Claude Haiku + tool calling
+### Phase 2: Core Integrations (Week 2)
+- Google Calendar integration (check + book via OAuth)
+- Test call endpoint: `POST /api/test-call` — trigger a demo call to any phone number via Twilio API (used for sales demos AND future self-serve onboarding)
 - Missed-call text-back (n8n workflow)
 - SMS auto-reply with AI (n8n workflow)
-- Google Calendar integration (check + book)
 - Call recording + summary generation
 
 ### Phase 3: Lead Management + Drip (Week 3)
@@ -754,34 +758,53 @@ Before sending any SMS, we must register with The Campaign Registry (TCR) throug
 - Follow-up drip workflow (n8n)
 - STOP/HELP handling
 - Emergency escalation flow
-- Admin panel: client CRUD, lead feed, call log
+- Weekly brief SMS: automated Monday 8 AM text to client showing calls/appointments/revenue
+- Admin panel: client CRUD, lead feed, call log, on-call roster management
 
 ### Phase 4: Revenue Rescued + Dashboard (Week 3-4)
 - Revenue metrics rollup workflow
-- Client dashboard (PIN-protected)
-- Revenue Rescued visualization
-- Call history with AI summaries
+- Client dashboard (PIN-protected, DB-backed rate limiting)
+- Revenue Rescued visualization (the #1 retention tool AND sales tool)
+- Call history with AI summaries + call briefing cards
 - Admin aggregate dashboard
+- Per-appointment tracking (for future hybrid pricing)
 
 ### Phase 5: Review System (Week 4)
 - Review request workflow
 - Google Business Profile API integration
-- Review monitoring + auto-reply
+- Review monitoring + owner alerts
 - Review velocity tracking in dashboard
 
 ### Phase 6: GEO/SEO Automation (Week 4-5)
 - GBP audit tool
-- Schema markup generator
+- Schema markup generator (LocalBusiness, Service, FAQPage)
 - Service page content generator
-- Monthly GEO report generator
+- Monthly GEO report generator (SerpAPI + Puppeteer PDF)
 - AI search visibility checker
 
-### Phase 7: Billing + Polish (Week 5)
-- Stripe subscription integration
+### Phase 7: Billing + Deployment (Week 5)
+- Stripe subscription integration (flat tiers for now; per-appointment billing ready to enable later)
 - Client onboarding flow (admin panel)
-- Twilio number provisioning via API
-- Domain + SSL + production deployment
-- Landing page for ServiceLine AI itself
+- Twilio number auto-provisioning via API
+- Domain + SSL + production deployment (Railway + Cloudflare)
+- Twilio fallback function (serverless voicemail on Twilio Functions)
+- Landing page for ServiceLine AI
+
+### Phase 8: Self-Serve Portal (Month 4-5, after 10 assisted clients)
+- Public signup page with Google Places autocomplete for business identification
+- 7-step onboarding wizard: signup → AI auto-config → voice selection → test call → phone routing → service config → payment
+- Auto test call trigger (Twilio API → ConversationRelay → prospect hears their AI)
+- Trade-specific service template library (plumbing + HVAC checklists)
+- Twilio number auto-provisioning in signup flow
+- Call forwarding verification (automated test call)
+- Welcome email sequence (Day 1/3/7 touchpoints)
+
+### Phase 9: Land-and-Expand Services (Month 6+)
+- Website + GBP optimization service ($199-399/mo add-on)
+- Google Ads / LSA management ($500-1,500/mo + ad spend)
+- Jobber / Housecall Pro integrations
+- Seasonal AI script templates (AC tune-up, winter freeze prep)
+- Referral program built into portal and dashboard
 
 ---
 
@@ -801,11 +824,12 @@ Before sending any SMS, we must register with The Campaign Registry (TCR) throug
 
 ## Stripe Integration
 
-- **Subscription products:** Two Stripe Products — "Starter" ($199/mo) and "Pro" ($499/mo)
-- **Setup fee:** One-time Stripe invoice for $500 created during onboarding
+- **Subscription products:** Two Stripe Products — "Starter" ($199/mo) and "Pro" ($499/mo). Keep flat pricing for launch simplicity. Per-appointment hybrid pricing ($149/mo + $9/booked appointment) is documented in GTM strategy and can be enabled later via Stripe usage-based billing when we have enough data to justify the transition.
+- **Setup fee:** One-time Stripe invoice for $500 created during onboarding. Consider reducing to $299 (waived on annual) per GTM playbook recommendation.
 - **Webhook handling:** Listen for `invoice.payment_failed` → pause client's service (set status to `paused`, AI greets callers with "this number is temporarily unavailable") and alert operator. Listen for `invoice.paid` → reactivate.
 - **Cancellation:** `customer.subscription.deleted` → set status to `churned`, stop all workflows for that client, retain data for 90 days
-- **No trials** at launch. Can add a 7-day free trial later once we have testimonials.
+- **14-day pilot** replaces traditional free trial. No credit card required. Full Pro features.
+- **Auto-pay via card on file** — required for all clients. Eliminates 80%+ of collection problems with contractor audience.
 
 ---
 
@@ -827,11 +851,34 @@ This architecture is designed for **1-30 clients**. At that scale:
 
 ## Success Criteria
 
+### Product Quality
 1. **Voice agent answers a missed call and books an appointment** end-to-end in under 60 seconds
 2. **Missed-call text-back fires within 10 seconds** of a no-answer
-3. **Revenue Rescued dashboard shows accurate data** matching call/lead/appointment records
-4. **First pilot client onboarded** within 1 week of Phase 2 completion (don't wait for the full product — the phone system alone is enough to pilot)
-5. **3 pilot clients running** before Phase 4 is done — generating real Revenue Rescued data
-6. **5 paying clients** within 30 days of launch
+3. **AI responses are under 35 words / 2 sentences** — no rambling, no preamble, dispatcher tone
+4. **Call briefing cards delivered to on-call person** within 30 seconds of booking
+5. **Revenue Rescued dashboard shows accurate data** matching call/lead/appointment records
 6. **< 2% SMS delivery failure rate** (10DLC compliant)
-7. **Admin can onboard a new client in under 30 minutes** using the admin panel
+7. **172+ automated tests passing** covering edge cases, horror stories, positive outcomes, and security
+
+### Business Milestones
+8. **First pilot client onboarded** within 1 week of Phase 2 completion
+9. **3 pilot clients running** before Phase 4 is done — generating real Revenue Rescued data
+10. **5 paying clients** within 30 days of launch
+11. **First case study with dollar amounts** published by Month 3
+12. **10 clients** by Month 6 — validates product, triggers self-serve portal build
+13. **Self-serve portal live** by Month 5 — contractor goes from signup to live AI in under 15 minutes
+14. **Admin can onboard a new client in under 30 minutes** (assisted path) or **contractor self-onboards in under 15 minutes** (self-serve path)
+
+### GTM Milestones
+15. **Prospect list of 200+ qualified contractors** built before first outreach
+16. **Daily outreach cadence maintained** — 25-50 calls + 50-75 emails + 5-10 DMs per day
+17. **YouTube channel with 8+ videos** by Month 4
+18. **Referral program active** by Month 3 — ask at 30-60 day mark via SMS
+
+### Reference Documents
+- GTM Strategy: `docs/gtm-strategy.md`
+- Self-Serve Evaluation: `docs/self-serve-evaluation.md`
+- Security Hardening: `.security-hardening/` (13 files, all phases complete)
+- Infrastructure Design: `docs/superpowers/plans/2026-03-17-infrastructure-security-design.md`
+- Secrets Management: `docs/superpowers/plans/secrets-management.md`
+- Monitoring Design: `docs/superpowers/specs/security-monitoring-design.md`

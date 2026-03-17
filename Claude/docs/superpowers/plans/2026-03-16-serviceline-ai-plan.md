@@ -6,9 +6,61 @@
 
 **Architecture:** Monorepo with three services — a Fastify voice server (ConversationRelay + Claude), n8n for workflow automation, and a Next.js web app (admin panel + client dashboard). All backed by PostgreSQL on Railway. Twilio handles voice + SMS. Stripe handles billing.
 
-**Tech Stack:** TypeScript, Fastify, @fastify/websocket, @anthropic-ai/sdk, Next.js 14 (App Router), PostgreSQL 16, Drizzle ORM, Twilio, Stripe, n8n, Railway
+**Tech Stack:** TypeScript, Fastify, @fastify/websocket, @anthropic-ai/sdk, Next.js 16 (App Router), PostgreSQL 16, Drizzle ORM, Twilio, Stripe, n8n, Railway
 
 **Spec:** `docs/superpowers/specs/2026-03-16-serviceline-ai-design.md`
+
+---
+
+## Build Status (Updated 2026-03-17)
+
+### Phase 1: Foundation — COMPLETE ✅
+
+| Task | Status | What Was Built |
+|---|---|---|
+| Task 1: Project scaffolding | ✅ | Monorepo with `packages/db`, `apps/voice`, `apps/web` |
+| Task 2: Database schema | ✅ | 12 tables with Drizzle ORM + 4 migrations |
+| Task 3: Voice server skeleton | ✅ | Fastify + TwiML + health check + Twilio validation |
+| Task 4: Call status handler | ✅ | Two-step TwiML (Pro → ConversationRelay, Starter → voicemail) |
+| Task 5: WebSocket + Claude agent | ✅ | ConversationRelay handler + 3 tools + tool loop |
+
+### Additional Features Built (beyond original plan)
+
+| Feature | Status | Tests |
+|---|---|---|
+| Security hardening (13 steps, OWASP compliant) | ✅ | WebSocket HMAC auth, rate limiting, encryption, prompt sanitization |
+| Anti-rambling (dispatcher tone, 35-word limit) | ✅ | 31 tests |
+| Call briefing cards | ✅ | 28 tests |
+| On-call routing with escalation | ✅ | 10 tests |
+| Horror story defenses | ✅ | 24 tests |
+| Positive outcome cross-checks | ✅ | 33 tests |
+| Interrupt handling (ConversationRelay) | ✅ | 3 tests |
+| **Total test count** | **172 tests across 12 files** | All passing |
+
+### Research & Strategy Documents
+
+| Document | Location |
+|---|---|
+| GTM Strategy | `docs/gtm-strategy.md` |
+| Self-Serve Portal Evaluation | `docs/self-serve-evaluation.md` |
+| Security Hardening (13 reports) | `.security-hardening/` |
+| Infrastructure Security Design | `docs/superpowers/plans/2026-03-17-infrastructure-security-design.md` |
+| Secrets Management | `docs/superpowers/plans/secrets-management.md` |
+| Monitoring Design | `docs/superpowers/specs/security-monitoring-design.md` |
+| Auth Architecture | `.security-hardening/08-auth-enhancement.md` |
+
+### Remaining Phases
+
+| Phase | Tasks | Status |
+|---|---|---|
+| Phase 2: Core Integrations | Tasks 6-7 + test call endpoint | **NEXT** |
+| Phase 3: Lead Management + Drip | Tasks 8-12 + weekly brief SMS | Pending |
+| Phase 4: Dashboard + Revenue Rescued | Tasks 13-16 | Pending |
+| Phase 5: Review System | Task 17 | Pending |
+| Phase 6: GEO/SEO Automation | Task 18 | Pending |
+| Phase 7: Billing + Deployment | Tasks 19-21 | Pending |
+| Phase 8: Self-Serve Portal | New — from blueprint | Month 4-5 |
+| Phase 9: Land-and-Expand | New — from playbook | Month 6+ |
 
 ---
 
@@ -2132,16 +2184,87 @@ Create a client with your own phone number as `forward_phone` and a Twilio test 
 
 ---
 
+---
+
+## Phase 8: Self-Serve Portal (Month 4-5)
+
+Per the Self-Serve Portal Blueprint (`Self_Serve_Portal_Blueprint.md`), build after 10 assisted clients prove the product.
+
+### Task 24: Public Signup + Google Places Autocomplete
+
+**Files:**
+- Create: `apps/web/src/app/signup/page.tsx`
+- Create: `apps/web/src/app/signup/steps/` (7 step components)
+- Create: `apps/web/src/app/api/signup/route.ts`
+
+- [ ] **Step 1:** Build 7-step signup wizard as Next.js pages
+- [ ] **Step 2:** Integrate Google Places API (New) for business autocomplete
+- [ ] **Step 3:** Auto-populate business name, phone, address, hours, website from Google
+- [ ] **Step 4:** Trade-specific service checklists (plumbing + HVAC dropdown menus)
+- [ ] **Step 5:** Commit
+
+### Task 25: Auto Test Call + Voice Selection
+
+- [ ] **Step 1:** Build voice selection UI with audio sample previews
+- [ ] **Step 2:** Build `POST /api/test-call` endpoint — Twilio `calls.create()` → ConversationRelay
+- [ ] **Step 3:** Auto-trigger test call after voice + greeting confirmed (the activation moment)
+- [ ] **Step 4:** Commit
+
+### Task 26: Auto Phone Provisioning + Forwarding Verification
+
+- [ ] **Step 1:** Auto-provision Twilio number via API in signup flow
+- [ ] **Step 2:** Carrier-specific call forwarding guides (Verizon, AT&T, T-Mobile)
+- [ ] **Step 3:** "Verify My Setup" button — automated test call confirms forwarding works
+- [ ] **Step 4:** Commit
+
+### Task 27: Self-Serve Payment + Go-Live
+
+- [ ] **Step 1:** Stripe Checkout in signup flow (setup fee + first month)
+- [ ] **Step 2:** Auto-create client record in DB after payment
+- [ ] **Step 3:** AI goes live immediately — no manual approval
+- [ ] **Step 4:** Welcome email sequence (Day 1/3/7)
+- [ ] **Step 5:** Commit
+
+---
+
+## Phase 9: Land-and-Expand (Month 6+)
+
+Per the GTM Strategy (`docs/gtm-strategy.md`), expand each client into higher-ARPU services.
+
+### Task 28: Website + GBP Optimization Service
+
+- [ ] **Step 1:** GBP audit tool (analyze listing completeness, category, photos, posts)
+- [ ] **Step 2:** Website audit with recommendations
+- [ ] **Step 3:** Service page generator (Claude creates location-specific landing pages)
+- [ ] **Step 4:** Monthly performance tracking in dashboard
+
+### Task 29: Referral Program
+
+- [ ] **Step 1:** Referral link generation per client
+- [ ] **Step 2:** $200 account credit on successful referral conversion
+- [ ] **Step 3:** Ask via SMS at 30-60 day mark
+- [ ] **Step 4:** Track referral source in client record
+
+### Task 30: FSM Integrations
+
+- [ ] **Step 1:** Jobber API integration (create leads/jobs from AI bookings)
+- [ ] **Step 2:** Housecall Pro API integration
+- [ ] **Step 3:** Webhook-based fallback for other FSM tools
+
+---
+
 ## Checkpoint Summary
 
-| Phase | Tasks | What's Shippable After |
-|---|---|---|
-| Phase 1 | Tasks 1-5 | Voice server answers calls with AI, can be demoed |
-| Phase 2 | Tasks 6-7 | Full phone system with calendar booking + notifications |
-| Phase 3 | Tasks 8-12 | All n8n workflows: text-back, SMS, drip, reviews, metrics |
-| Phase 4 | Tasks 13-16 | Admin panel + client dashboard with Revenue Rescued |
-| Phase 5 | Tasks 17-18 | Review monitoring + GEO/SEO automation |
-| Phase 6 | Tasks 19-21 | Stripe billing + production deployment |
-| Phase 7 | Tasks 22-23 | Pilot lifecycle + end-to-end verification |
+| Phase | Tasks | Status | What's Shippable After |
+|---|---|---|---|
+| Phase 1 | Tasks 1-5 | **COMPLETE ✅** | Voice server answers calls with AI, 172 tests |
+| Phase 2 | Tasks 6-7 | **NEXT** | Full phone system with calendar + test call endpoint |
+| Phase 3 | Tasks 8-12 | Pending | n8n workflows: text-back, SMS, drip, reviews, metrics |
+| Phase 4 | Tasks 13-16 | Pending | Admin panel + dashboard with Revenue Rescued |
+| Phase 5 | Tasks 17-18 | Pending | Review monitoring + GEO/SEO automation |
+| Phase 6 | Tasks 19-21 | Pending | Stripe billing + Railway deployment |
+| Phase 7 | Tasks 22-23 | Pending | Pilot lifecycle + E2E verification |
+| Phase 8 | Tasks 24-27 | Month 4-5 | Self-serve portal (signup → test call → payment → live) |
+| Phase 9 | Tasks 28-30 | Month 6+ | Land-and-expand (website, GBP, referrals, FSM) |
 
-**Start selling pilots after Phase 2.** The phone system alone is enough to demonstrate value. Build the dashboard and billing while pilots are running.
+**Start selling pilots after Phase 2.** Build dashboard and billing while pilots run. Build self-serve portal after 10 assisted clients prove the product.
