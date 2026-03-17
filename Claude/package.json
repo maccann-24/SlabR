@@ -1,0 +1,8 @@
+{
+  "name": "serviceline-ai",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}
