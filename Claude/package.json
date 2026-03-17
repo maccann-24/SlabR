@@ -1,6 +1,9 @@
 {
   "name": "serviceline-ai",
   "private": true,
+  "scripts": {
+    "seed": "DATABASE_URL='postgresql://serviceline:serviceline@localhost:5432/serviceline' tsx scripts/seed-demo.ts"
+  },
   "workspaces": [
     "packages/*",
     "apps/*"
