@@ -237,7 +237,7 @@ function handleMockResponse(session: SimulatorSession, callerMessage: string): s
   // Emergency detection — match the same scenarios the real AI would escalate
   // Must catch: flooding, burst pipe, gas smell/leak, sewage, no heat,
   // water shooting, overflowing, inches of water, water heater leaking badly
-  if (/flood|burst|gas smell|smell gas|gas leak|sewage|no heat|water shooting|water is shooting|overflowing|inches of water|water everywhere|water all over/i.test(lower)) {
+  if (/flood|burst|gas smell|smell gas|gas leak|sewage|no heat|water shooting|water is shooting|overflowing|inches of water|water everywhere|water all over|leaking everywhere|water heater explod/i.test(lower)) {
     session.emergencyEscalated = true;
     session.events.push({
       type: 'tool_call',
