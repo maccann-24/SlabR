@@ -20,16 +20,17 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 
 ### Unit Economics
 
-| Item | Cost/Client/Month |
-|---|---|
-| Twilio phone number | $1.00 |
-| Voice (~50 calls × 3 min) | ~$1.30 |
-| SMS (~200 messages) | ~$1.60 |
-| Claude Haiku API | ~$0.50 |
-| GEO tooling (automated) | ~$1.00 |
-| **Total cost per client** | **~$5.40** |
-| **Starter margin** | $193.60 (97%) |
-| **Pro margin** | $493.60 (99%) |
+| Item | Cost/Client/Month | Notes |
+|---|---|---|
+| Twilio phone number | $1.00 | |
+| Voice (~50 calls × 3 min) | ~$2.50 | Includes ConversationRelay + recording storage |
+| SMS (~200 messages) | ~$1.60 | |
+| Claude Haiku API | ~$0.50 | Voice (~$0.17) + SMS (~$0.33) |
+| GEO tooling | ~$2.00 | SerpAPI or Google Custom Search for visibility checks |
+| Railway infra (amortized) | ~$3.00 | $20-40/mo total ÷ client count; decreases with scale |
+| **Total cost per client** | **~$10.60** | At 10 clients; drops to ~$7 at 30+ |
+| **Starter margin** | $188.40 (95%) | |
+| **Pro margin** | $488.40 (98%) | |
 
 ---
 
@@ -54,6 +55,8 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 
 **AI model:** Claude Haiku for speed (sub-second response generation). System prompt is per-client, loaded from the database, containing business name, services offered, service area, pricing guidance, and personality notes.
 
+**Recording consent:** If `client.recording_consent_required` is true, the ConversationRelay `welcomeGreeting` prepends: *"This call may be recorded for quality purposes."* Default is true (covers two-party consent states like California, Florida, etc.). The operator can disable for one-party consent states if desired.
+
 **Conversation guardrails:**
 - Never quote exact prices (says "typically ranges from..." or "the tech will provide an exact quote on-site")
 - Never diagnose (says "that sounds like it could be X, but our tech will confirm")
@@ -62,13 +65,17 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 
 ### F2: Missed-Call Text-Back (both tiers)
 
-**Trigger:** Twilio `DialCallStatus=no-answer` fires HTTP POST to n8n webhook. Also triggers if caller hangs up during ring (short ring duration < 15 seconds).
+**Trigger:** Twilio `DialCallStatus=no-answer` fires HTTP POST to the voice server's `/call-status` action endpoint.
 
-**Action (within 10 seconds):**
+**Behavior depends on client plan:**
+- **Pro tier:** The `/call-status` endpoint returns `<Connect><ConversationRelay>` TwiML, handing the caller to the AI voice agent (F1). Text-back is **suppressed** — the voice agent handles the lead. Text-back only fires if the caller hangs up before the AI greeting finishes (detected via ConversationRelay `disconnect` event with `duration < 5s`).
+- **Starter tier:** The `/call-status` endpoint returns `<Say>` with a voicemail prompt + `<Record>`, and simultaneously triggers the n8n text-back webhook.
+
+**Text-back action (within 10 seconds):**
 1. n8n receives webhook with caller's phone number
 2. Looks up which client owns this Twilio number
 3. Sends SMS via Twilio: *"Hey! Sorry we missed your call at [Business Name]. Need help with heating, cooling, or plumbing? Reply here or book a time: [booking_link]"*
-4. Creates a lead record in the database (status: `new`)
+4. Creates a lead record in the database (status: `new`, `drip_next_at: now() + 24h`)
 
 **If caller replies via SMS:** Routes to F3 (SMS Auto-Reply).
 
@@ -85,6 +92,10 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 6. Store message in conversation history
 
 **Conversation context:** Messages are stored in PostgreSQL with `client_id`, `contact_phone`, `direction` (inbound/outbound), `body`, `created_at`. Claude sees the last 10 messages for continuity.
+
+**Conversation limits:** Max 15 AI replies per lead per 24-hour window. After the limit, send: *"I'd love to keep helping — let me have [owner_name] reach out to you directly."* Then SMS the owner with the conversation summary. This prevents runaway API costs and infinite bot conversations that never convert.
+
+**HELP keyword:** If the message body contains "HELP" (case-insensitive), reply with: *"[Business Name] — call us at [forward_phone] or reply to this text. To stop messages, reply STOP."* This is required by 10DLC compliance.
 
 ### F4: Follow-Up Drip (both tiers)
 
@@ -118,7 +129,7 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 
 **What it shows:**
 - **Calls rescued this month** — count of missed calls handled by AI voice agent or text-back
-- **Estimated revenue rescued** — calls rescued × client's average ticket (configurable, default $350)
+- **Estimated revenue rescued** — calls rescued × client's average ticket (configurable, default $350). "Calls rescued" = any missed call where the system made contact (AI answered, text-back sent, or SMS conversation started). This is deliberately broader than "appointments booked" — it represents revenue that would have been lost entirely without the system.
 - **Appointments booked** — count of appointments created by the system
 - **Leads in pipeline** — active leads in drip sequence
 - **Reviews collected** — review requests sent vs reviews received this month
@@ -130,7 +141,13 @@ ServiceLine AI is a productized AI phone system and GEO/SEO automation platform 
 - **Local search impressions** — from Google Business Profile Insights API
 - **AI search mentions** — estimated visibility in AI search results
 
-**Access:** Each client gets a unique URL (`dashboard.servicelineai.com/[client_slug]`) with a simple PIN login (no account creation). The dashboard is a read-only view — no configuration, no complexity.
+**Access:** Each client gets a unique URL (`dashboard.servicelineai.com/[client_slug]`) with PIN login (no account creation). The dashboard is a read-only view — no configuration, no complexity.
+
+**PIN security:**
+- Slugs include a random suffix (e.g., `mikes-plumbing-a7x2`) to prevent URL enumeration
+- Rate limit: 5 PIN attempts per 15 minutes per slug, then 30-minute lockout
+- PIN is bcrypt-hashed in the database (never stored plaintext)
+- Future upgrade path: replace PIN with magic link sent via SMS to owner's phone
 
 **Operator view:** Admin panel shows all clients' Revenue Rescued data in aggregate — total revenue rescued across all clients, average per client, top performers.
 
@@ -262,11 +279,12 @@ CREATE TABLE clients (
   google_place_id TEXT,                  -- for review link + GBP API
   google_review_link TEXT,
   google_calendar_id TEXT,               -- calendar to book into
+  recording_consent_required BOOLEAN DEFAULT true, -- two-party consent states
   ai_system_prompt TEXT,                 -- custom personality/instructions
   plan TEXT NOT NULL CHECK (plan IN ('starter', 'pro')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
-  dashboard_pin TEXT NOT NULL,           -- 4-6 digit PIN for client dashboard
+  dashboard_pin TEXT NOT NULL,           -- bcrypt-hashed 4-6 digit PIN
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','churned')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
@@ -393,6 +411,54 @@ CREATE TABLE revenue_metrics (
 );
 ```
 
+### `google_oauth_tokens`
+```sql
+CREATE TABLE google_oauth_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES clients(id) UNIQUE,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  token_type TEXT DEFAULT 'Bearer',
+  scope TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Google Calendar auth approach:** Each client completes a one-time OAuth2 consent flow during onboarding. The admin panel presents a "Connect Google Calendar" button that initiates the OAuth flow. Tokens are stored encrypted at rest (AES-256, key in environment variable). The voice server and n8n refresh tokens automatically when expired. If a refresh fails, the operator is alerted and the client's booking feature degrades gracefully (AI tells caller "I can take your info and have someone call you back to schedule").
+
+### Additional Indexes
+```sql
+CREATE INDEX idx_leads_drip ON leads(client_id, status, drip_next_at) WHERE drip_step < 3;
+CREATE INDEX idx_leads_client_created ON leads(client_id, created_at DESC);
+CREATE INDEX idx_calls_client_created ON calls(client_id, created_at DESC);
+CREATE INDEX idx_appointments_client_scheduled ON appointments(client_id, scheduled_at);
+CREATE INDEX idx_reviews_client_created ON reviews(client_id, created_at DESC);
+CREATE INDEX idx_revenue_metrics_client_date ON revenue_metrics(client_id, date DESC);
+CREATE UNIQUE INDEX idx_leads_dedup ON leads(client_id, contact_phone)
+  WHERE status NOT IN ('completed', 'lost', 'opted_out');
+```
+
+**Lead deduplication:** The partial unique index on `(client_id, contact_phone)` prevents duplicate active leads for the same caller. If a caller calls again after their previous lead was completed/lost, a new lead is created. The voice server and text-back workflow use `INSERT ... ON CONFLICT DO UPDATE` to merge into existing active leads rather than creating duplicates.
+
+### Webhook Security
+
+All inbound Twilio webhooks (voice server and n8n) must validate the `X-Twilio-Signature` header using Twilio's request validation. This prevents spoofed webhook calls. Implementation: use `twilio.validateRequest()` middleware in Fastify, and a custom n8n Code node that validates before processing.
+
+### n8n Configuration
+
+- **Backend database:** PostgreSQL (shared with app data but separate schema `n8n`), NOT SQLite. This survives container restarts and enables future worker mode.
+- **UI access:** n8n web UI is restricted to Railway's private network (no public URL). Access via Railway's port forwarding when needed.
+- **Wait node resilience:** n8n with PostgreSQL backend persists wait node state across restarts. The 2-hour wait in WF4 survives redeployments.
+
+### Monitoring and Alerting
+
+- **Structured logging:** All services log JSON to stdout (Railway captures this).
+- **Health checks:** Each Railway service has a `/health` endpoint. Railway restarts unhealthy services automatically.
+- **Alert channels:** Critical alerts (voice server down, Twilio auth failure, emergency escalation failure) → SMS to operator via Twilio. Non-critical (daily metrics, review alerts) → email.
+- **Uptime monitoring:** Free tier of BetterUptime or similar pings `/health` endpoints every 60 seconds.
+
 ---
 
 ## Voice Server Detail
@@ -405,28 +471,51 @@ CREATE TABLE revenue_metrics (
 
 ### Request Flow
 
-1. Incoming call hits Twilio number
-2. Twilio requests TwiML from voice server: `GET /twiml/:twilioPhone`
-3. Voice server looks up client by Twilio number, returns:
-   ```xml
-   <Response>
-     <Dial action="/call-status" timeout="20">
-       <Number>+1XXXXXXXXXX</Number>  <!-- client's real phone -->
-     </Dial>
-     <Connect>
-       <ConversationRelay
-         url="wss://voice.servicelineai.com/ws"
-         welcomeGreeting="Hi, thanks for calling [Business Name]..."
-         voice="en-US-Journey-F"
-         ttsProvider="google"
-         transcriptionProvider="deepgram"
-         speechModel="nova-2-general"
-       />
-     </Connect>
-   </Response>
-   ```
-4. If client answers → `<Dial>` connects, ConversationRelay never fires
-5. If no answer after 20s → `<Dial>` action fires (for missed-call text-back), then `<Connect>` fires and caller is connected to AI
+**Important:** Twilio's TwiML execution model means that when `<Dial>` has an `action` URL, Twilio calls that URL and executes the returned TwiML — it does NOT fall through to subsequent verbs in the original document. The voice server uses a two-step TwiML pattern:
+
+**Step 1 — Initial TwiML** (`GET /twiml/:twilioPhone`):
+```xml
+<Response>
+  <Dial action="https://voice.servicelineai.com/call-status" timeout="20">
+    <Number>+1XXXXXXXXXX</Number>  <!-- client's real phone -->
+  </Dial>
+  <!-- This is fallback only if action URL is unreachable -->
+  <Say>We're sorry, please try again later.</Say>
+</Response>
+```
+
+**Step 2 — Action handler** (`POST /call-status`):
+
+The `/call-status` endpoint inspects `DialCallStatus` and returns different TwiML:
+
+- **`completed`** (client answered and hung up): return `<Hangup/>`. No further action.
+- **`no-answer`** (Pro tier): return ConversationRelay TwiML to hand caller to AI:
+  ```xml
+  <Response>
+    <Connect>
+      <ConversationRelay
+        url="wss://voice.servicelineai.com/ws"
+        welcomeGreeting="Hi, thanks for calling [Business Name]..."
+        voice="en-US-Journey-F"
+        ttsProvider="google"
+        transcriptionProvider="deepgram"
+        speechModel="nova-2-general"
+      />
+    </Connect>
+  </Response>
+  ```
+- **`no-answer`** (Starter tier): return voicemail prompt + fire text-back webhook to n8n:
+  ```xml
+  <Response>
+    <Say>Sorry we missed your call. Please leave a message after the beep.</Say>
+    <Record maxLength="120" action="/recording-complete" />
+  </Response>
+  ```
+  The endpoint also sends an async HTTP POST to n8n's missed-call-textback webhook.
+
+- **`busy` / `failed`**: same as `no-answer` for the client's plan.
+
+**Fallback TwiML:** Each Twilio phone number is configured with a Fallback URL pointing to a Twilio Function (serverless, separate from Railway) that returns a basic voicemail TwiML. This ensures calls are handled even if the voice server is down.
 
 ### WebSocket Protocol
 
@@ -524,6 +613,7 @@ const tools = [
 ### WF4: Review Request
 - **Trigger:** Webhook node (`POST /job-complete`)
 - **Input:** `{ client_id, contact_phone }`
+- **Dedup:** Check if a review request already exists for this `(client_id, lead_id)` — skip if so
 - **Wait:** Wait node (2 hours)
 - **Lookup:** PostgreSQL — find client's Google review link
 - **Send SMS:** Twilio — review request message
@@ -532,26 +622,30 @@ const tools = [
 ### WF5: Review Monitor
 - **Trigger:** Cron node (daily at 9 AM)
 - **For each active client with Google Place ID:**
-  - Poll Google Business Profile API for new reviews
-  - If new 4-5 star review → auto-reply via GBP API with thanks
-  - If new 1-3 star review → SMS alert to owner
+  - Poll Google Places API (New) for recent reviews using `places/{place_id}/reviews`
+  - Compare against last known review count in `reviews` table
+  - If new reviews detected → SMS alert to owner with star rating and snippet
+  - Auto-reply to reviews is **deferred** — GBP Review Management API requires partner-level access. For v1, we alert the owner to reply manually. Auto-reply can be added if/when we get GBP API partner status.
   - Update `reviews` table
 
 ### WF6: GEO Report Generator (Pro tier)
 - **Trigger:** Cron node (1st of each month)
 - **For each Pro client:**
-  - Pull GBP Insights (views, searches, actions)
   - Pull review velocity from `reviews` table
-  - Run AI search visibility check (search "[service] in [city]" via API)
-  - Generate PDF report using Claude (structured findings + recommendations)
-  - Email report to client
-  - Store in `geo_audits`
+  - Run AI search visibility check via SerpAPI ($50/mo for 5,000 searches — ~10 queries/client/month is well within budget): search `[service] in [city]` on Google, extract whether client appears in local pack, map pack, or organic results
+  - Claude generates structured findings + recommendations as JSON
+  - PDF generated using **Puppeteer** rendering an HTML template (hosted in the Next.js app at `/api/report/[client_id]`). Puppeteer runs as a one-shot via n8n's Execute Command node or HTTP Request to a `/api/generate-report` endpoint that returns a PDF buffer.
+  - PDF stored in Railway volume at `/data/reports/[client_id]/[date].pdf`, served via a signed URL
+  - Email report to client via Resend or SendGrid (transactional email)
+  - Store metadata in `geo_audits`
+
+**Note:** Google Business Profile Insights API (Performance API) requires OAuth from the business owner (same tokens used for Calendar). If the client hasn't connected their Google account, the report omits GBP metrics and notes "Connect Google to see detailed insights."
 
 ### WF7: Revenue Metrics Rollup
 - **Trigger:** Cron node (daily at midnight)
 - **For each active client:**
-  - Count calls, leads, appointments, reviews for the day
-  - Calculate estimated revenue rescued (appointments × avg_ticket_value)
+  - Count calls rescued (AI-answered + text-back sent), leads created, appointments booked, reviews for the day
+  - Calculate estimated revenue rescued = calls_rescued × avg_ticket_value (broader than just booked appointments — represents total potential revenue saved from missed calls)
   - Upsert into `revenue_metrics`
 
 ---
@@ -670,11 +764,38 @@ Before sending any SMS, we must register with The Campaign Registry (TCR) throug
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Twilio ConversationRelay latency | Caller hears awkward pauses | Use Claude Haiku (fastest), stream tokens, keep system prompts concise |
+| ConversationRelay beta status | Feature could change or be removed | ConversationRelay is in public beta as of March 2026. Twilio has published official tutorials and reference repos for it. Fallback plan: switch to Twilio Media Streams + Deepgram + Google TTS manually (more code, same result). Monitor Twilio changelog for GA announcement. |
 | 10DLC registration delays | Can't send SMS | Register immediately in Phase 1, use toll-free as fallback |
 | Google Calendar API quota | Can't book appointments | Low volume per client, well within free tier limits |
 | Client's real phone is a landline | Can't receive SMS alerts | Offer email alerts as fallback |
 | AI says something inappropriate | Reputation damage | Strict system prompt guardrails, log all conversations, periodic review |
 | Railway downtime | Missed calls not handled | Twilio fallback TwiML (voicemail) if voice server is unreachable |
+
+---
+
+## Stripe Integration
+
+- **Subscription products:** Two Stripe Products — "Starter" ($199/mo) and "Pro" ($499/mo)
+- **Setup fee:** One-time Stripe invoice for $500 created during onboarding
+- **Webhook handling:** Listen for `invoice.payment_failed` → pause client's service (set status to `paused`, AI greets callers with "this number is temporarily unavailable") and alert operator. Listen for `invoice.paid` → reactivate.
+- **Cancellation:** `customer.subscription.deleted` → set status to `churned`, stop all workflows for that client, retain data for 90 days
+- **No trials** at launch. Can add a 7-day free trial later once we have testimonials.
+
+---
+
+## Scaling Boundaries
+
+This architecture is designed for **1-30 clients**. At that scale:
+- Single voice server instance handles ~30 concurrent WebSocket connections comfortably
+- n8n community edition handles all cron workflows without overlap
+- Railway Postgres handles the query load easily
+
+**At 30+ clients**, evaluate:
+- Voice server: add Railway instance scaling (horizontal, with session affinity for WebSockets)
+- n8n: consider n8n Enterprise (queue mode with workers) or migrate high-volume workflows to custom Node.js services
+- Postgres: still fine up to hundreds of clients at this data volume
+
+**This is a good problem to have.** Don't over-engineer for scale before you have 10 paying clients.
 
 ---
 
