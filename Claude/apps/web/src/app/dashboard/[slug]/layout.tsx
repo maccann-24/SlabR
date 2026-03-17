@@ -22,35 +22,35 @@ export default async function DashboardLayout({
   const businessName = client?.name ?? "Dashboard";
 
   const navItems = [
-    { href: `/dashboard/${slug}/overview`, label: "Overview" },
-    { href: `/dashboard/${slug}/calls`, label: "Calls" },
-    { href: `/dashboard/${slug}/reviews`, label: "Reviews" },
+    { href: `/dashboard/${slug}/overview`, label: "Overview", icon: "📊" },
+    { href: `/dashboard/${slug}/calls`, label: "Calls", icon: "📞" },
+    { href: `/dashboard/${slug}/reviews`, label: "Reviews", icon: "⭐" },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
       {/* Top Nav */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="border-b border-slate-800 bg-[#060a14]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                {businessName}
-              </h1>
+              <h1 className="text-lg font-bold text-white">{businessName}</h1>
               <nav className="hidden sm:flex gap-1">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
                   >
+                    <span className="mr-1.5">{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
               </nav>
             </div>
-            <p className="text-xs text-gray-400">
-              Powered by ServiceLine AI
+            <p className="text-xs text-slate-600">
+              Powered by <span className="text-slate-400">ServiceLine</span>
+              <span className="text-amber-500">AI</span>
             </p>
           </div>
           {/* Mobile nav */}
@@ -59,8 +59,9 @@ export default async function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
               >
+                <span className="mr-1">{item.icon}</span>
                 {item.label}
               </Link>
             ))}

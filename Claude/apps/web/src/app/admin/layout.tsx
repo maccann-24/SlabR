@@ -13,43 +13,47 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen" style={{ background: "var(--background)" }}>
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white flex-shrink-0">
+      <aside className="w-64 flex-shrink-0 border-r border-slate-800 bg-[#060a14]">
         <div className="p-6">
-          <Link href="/" className="text-xl font-bold">
-            ServiceLine <span className="text-emerald-400">AI</span>
+          <Link href="/" className="text-xl font-bold tracking-tight text-white">
+            ServiceLine<span className="text-amber-500">AI</span>
           </Link>
-          <p className="text-xs text-gray-400 mt-1">Admin Panel</p>
+          <p className="text-xs text-slate-600 mt-1.5 font-medium uppercase tracking-wider">Command Center</p>
         </div>
-        <nav className="mt-2 px-3 space-y-1">
+        <nav className="mt-2 px-3 space-y-0.5">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+              className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all"
             >
               <svg
-                className="h-5 w-5 flex-shrink-0"
+                className="h-5 w-5 flex-shrink-0 text-slate-600 group-hover:text-amber-500 transition-colors"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d={item.icon}
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
               </svg>
               {item.label}
             </Link>
           ))}
         </nav>
+
+        {/* Status indicator */}
+        <div className="absolute bottom-0 left-0 w-64 p-4 border-t border-slate-800/50">
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            System Online
+          </div>
+        </div>
       </aside>
 
       {/* Main */}
-      <main className="flex-1 bg-gray-50 overflow-auto">
+      <main className="flex-1 overflow-auto" style={{ background: "#0d1220" }}>
         <div className="p-8">{children}</div>
       </main>
     </div>

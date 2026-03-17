@@ -43,24 +43,24 @@ export default function PinEntryPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--background)" }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            ServiceLine <span className="text-emerald-600">AI</span>
+          <h1 className="text-2xl font-bold text-white">
+            ServiceLine<span className="text-amber-500">AI</span>
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Enter your dashboard PIN to continue
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm"
+          className="rounded-xl border border-slate-800 bg-slate-900/50 p-8"
         >
           <label
             htmlFor="pin"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-slate-400 mb-2"
           >
             Dashboard PIN
           </label>
@@ -72,17 +72,17 @@ export default function PinEntryPage() {
             maxLength={6}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-            placeholder="Enter PIN"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+            placeholder="• • • • • •"
+            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3.5 text-center text-2xl tracking-[0.5em] font-mono text-white placeholder-slate-600 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors"
             autoFocus
           />
           {error && (
-            <p className="mt-2 text-sm text-red-600">{error}</p>
+            <p className="mt-2 text-sm text-red-400">{error}</p>
           )}
           <button
             type="submit"
             disabled={loading || pin.length < 4}
-            className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+            className="mt-4 w-full rounded-lg bg-amber-500 px-4 py-3.5 text-sm font-semibold text-black hover:bg-amber-400 disabled:opacity-50 disabled:hover:bg-amber-500 transition-colors shadow-lg shadow-amber-500/10"
           >
             {loading ? "Verifying..." : "View Dashboard"}
           </button>

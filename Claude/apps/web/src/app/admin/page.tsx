@@ -43,60 +43,60 @@ export default async function AdminDashboard() {
     return sum + (c.plan === "pro" ? 499 : 199);
   }, 0);
 
-  const stats = [
-    {
-      label: "Active Clients",
-      value: activeClients.length.toString(),
-      sub: `${allClients.length} total`,
-    },
-    {
-      label: "Monthly Recurring Revenue",
-      value: `$${mrr.toLocaleString()}`,
-      sub: "based on active plans",
-    },
-    {
-      label: "Revenue Rescued (Month)",
-      value: `$${Math.round(revenueThisMonthResult[0]?.total ?? 0).toLocaleString()}`,
-      sub: new Date().toLocaleString("default", { month: "long" }),
-    },
-    {
-      label: "Calls Today",
-      value: (callsTodayResult[0]?.count ?? 0).toString(),
-      sub: "inbound calls",
-    },
-    {
-      label: "Leads Today",
-      value: (leadsTodayResult[0]?.count ?? 0).toString(),
-      sub: "new leads captured",
-    },
-    {
-      label: "Appointments Today",
-      value: (appointmentsTodayResult[0]?.count ?? 0).toString(),
-      sub: "booked by AI",
-    },
-  ];
+  const revenueRescued = Math.round(revenueThisMonthResult[0]?.total ?? 0);
+  const callsToday = callsTodayResult[0]?.count ?? 0;
+  const leadsToday = leadsTodayResult[0]?.count ?? 0;
+  const appointmentsToday = appointmentsTodayResult[0]?.count ?? 0;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        System overview for ServiceLine AI
-      </p>
-
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-          >
-            <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {stat.value}
-            </p>
-            <p className="mt-1 text-xs text-gray-400">{stat.sub}</p>
-          </div>
-        ))}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          All systems operational
+        </div>
       </div>
+
+      {/* Revenue Rescued — hero card */}
+      <div className="mt-8 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <p className="text-sm font-medium text-amber-500 uppercase tracking-wider relative">
+          Revenue Rescued — {today.toLocaleString("default", { month: "long" })}
+        </p>
+        <p className="mt-3 text-5xl sm:text-6xl font-bold font-mono text-amber-500 tracking-tight glow-gold relative">
+          ${revenueRescued.toLocaleString()}
+        </p>
+        <p className="mt-2 text-sm text-slate-500 relative">
+          across {activeClients.length} active client{activeClients.length !== 1 ? "s" : ""}
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard label="Active Clients" value={activeClients.length.toString()} sub={`${allClients.length} total`} />
+        <StatCard label="MRR" value={`$${mrr.toLocaleString()}`} sub="active plans" accent />
+        <StatCard label="Calls Today" value={callsToday.toString()} sub="inbound" />
+        <StatCard label="Leads Today" value={leadsToday.toString()} sub="captured" />
+        <StatCard label="Appointments" value={appointmentsToday.toString()} sub="booked by AI" />
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: boolean }) {
+  return (
+    <div className={`rounded-xl border ${accent ? "border-amber-500/20" : "border-slate-800"} bg-slate-900/50 p-5 card-hover`}>
+      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className={`mt-2 text-2xl font-bold font-mono ${accent ? "text-amber-500" : "text-white"}`}>
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-slate-600">{sub}</p>
     </div>
   );
 }

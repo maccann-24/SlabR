@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "ServiceLine AI - AI Phone System for HVAC & Plumbing",
+  title: "ServiceLine AI — AI Phone System for HVAC & Plumbing",
   description:
     "Never miss a call. Book appointments 24/7. See exactly how much revenue your AI receptionist rescues.",
 };
@@ -19,8 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased bg-white text-gray-900`}>
+    <html lang="en" className="dark">
+      <body
+        className={`${dmSans.variable} ${jetbrainsMono.variable} antialiased`}
+        style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
+      >
         {children}
       </body>
     </html>

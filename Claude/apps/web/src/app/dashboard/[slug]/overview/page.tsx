@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { eq, gte, and, sql, desc } from "drizzle-orm";
+import { eq, gte, and, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 
@@ -24,7 +24,6 @@ export default async function OverviewPage({
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
-  // Current month metrics
   const [monthMetrics] = await db
     .select({
       revenueRescued: sql<number>`coalesce(sum(estimated_revenue_rescued::numeric), 0)::float`,
@@ -37,14 +36,10 @@ export default async function OverviewPage({
     .where(
       and(
         eq(schema.revenueMetrics.clientId, client.id),
-        gte(
-          schema.revenueMetrics.date,
-          startOfMonth.toISOString().slice(0, 10)
-        )
+        gte(schema.revenueMetrics.date, startOfMonth.toISOString().slice(0, 10))
       )
     );
 
-  // 6-month trend data
   const monthlyTrend = await db
     .select({
       month: sql<string>`to_char(date::date, 'Mon')`,
@@ -55,16 +50,10 @@ export default async function OverviewPage({
     .where(
       and(
         eq(schema.revenueMetrics.clientId, client.id),
-        gte(
-          schema.revenueMetrics.date,
-          sixMonthsAgo.toISOString().slice(0, 10)
-        )
+        gte(schema.revenueMetrics.date, sixMonthsAgo.toISOString().slice(0, 10))
       )
     )
-    .groupBy(
-      sql`to_char(date::date, 'Mon')`,
-      sql`to_char(date::date, 'YYYY-MM')`
-    )
+    .groupBy(sql`to_char(date::date, 'Mon')`, sql`to_char(date::date, 'YYYY-MM')`)
     .orderBy(sql`to_char(date::date, 'YYYY-MM')`);
 
   const chartData = monthlyTrend.map((row) => ({
@@ -79,43 +68,46 @@ export default async function OverviewPage({
 
   return (
     <div>
-      {/* Hero Revenue Number */}
-      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 sm:p-12 text-center shadow-sm">
-        <p className="text-sm font-medium text-emerald-700 uppercase tracking-wider">
-          Revenue Rescued This Month
-        </p>
-        <p className="mt-4 text-5xl sm:text-7xl font-extrabold text-emerald-600 tracking-tight">
-          ${revenueRescued.toLocaleString()}
-        </p>
-        <p className="mt-3 text-sm text-gray-500">
-          {new Date().toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+      {/* Revenue Rescued — THE hero */}
+      <div className="relative rounded-2xl border border-amber-500/20 overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, transparent 60%)" }}>
+        {/* Background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative p-10 sm:p-16 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 text-xs font-medium text-amber-500 mb-6">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse-gold" />
+            Revenue Rescued This Month
+          </div>
+
+          <p className="text-6xl sm:text-8xl font-bold font-mono text-amber-500 tracking-tight glow-gold">
+            ${revenueRescued.toLocaleString()}
+          </p>
+
+          <p className="mt-4 text-sm text-slate-500">
+            {now.toLocaleString("default", { month: "long", year: "numeric" })}
+          </p>
+        </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Calls Rescued" value={callsRescued.toString()} />
-        <StatCard
-          label="Appointments Booked"
-          value={appointmentsBooked.toString()}
-        />
-        <StatCard label="Avg Response Time" value="< 10 sec" />
-        <StatCard label="Reviews Collected" value={reviewsCollected.toString()} />
+      {/* Stat cards */}
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard label="Calls Rescued" value={callsRescued.toString()} icon="📞" />
+        <StatCard label="Appointments" value={appointmentsBooked.toString()} icon="📅" />
+        <StatCard label="Avg Response" value="< 10s" icon="⚡" />
+        <StatCard label="Reviews" value={reviewsCollected.toString()} icon="⭐" />
       </div>
 
-      {/* 6-Month Trend Chart */}
-      <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Revenue Rescued - 6 Month Trend
-        </h2>
+      {/* Chart */}
+      <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-base font-semibold text-white">6-Month Trend</h2>
+          <span className="text-xs text-slate-500 font-mono">Revenue Rescued</span>
+        </div>
         {chartData.length > 0 ? (
           <RevenueChart data={chartData} />
         ) : (
-          <p className="text-sm text-gray-400 text-center py-16">
-            Not enough data to display chart yet.
+          <p className="text-sm text-slate-600 text-center py-16">
+            Not enough data yet — check back after your first week.
           </p>
         )}
       </div>
@@ -123,13 +115,14 @@ export default async function OverviewPage({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 card-hover">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
+        <span className="text-lg">{icon}</span>
+      </div>
+      <p className="mt-2 text-2xl font-bold font-mono text-white">{value}</p>
     </div>
   );
 }
