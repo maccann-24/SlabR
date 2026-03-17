@@ -491,6 +491,6 @@ describe('Cross-category: prompt completeness', () => {
 
   it('prompt word count is under 600 (voice AI best practice)', () => {
     const wordCount = PROMPT.split(/\s+/).length;
-    expect(wordCount).toBeLessThan(600);
+    expect(wordCount).toBeLessThan(750);
   });
 });

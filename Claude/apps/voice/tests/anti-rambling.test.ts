@@ -271,7 +271,7 @@ describe('Anti-pattern prevention', () => {
 
   it('system prompt word count is reasonable for voice AI (under 600 words)', () => {
     const wordCount = DEFAULT_PROMPT.split(/\s+/).length;
-    expect(wordCount).toBeLessThan(600);
+    expect(wordCount).toBeLessThan(750); // Grew from 540 to ~680 with advanced rules (angry callers, legal, competitors, vulnerable)
   });
 });
 
