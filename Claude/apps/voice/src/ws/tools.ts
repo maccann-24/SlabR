@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ClientConfig } from '../lib/client-config.js';
 import { isValidPhone } from '../lib/xml-utils.js';
 import { smsToOwner } from '../services/notifications.js';
+import { notifyOnCall } from '../services/on-call.js';
 import { buildCallBrief, formatBriefForSms } from '../lib/call-brief.js';
 import { db, appointments } from '@serviceline/db';
 
@@ -156,10 +157,10 @@ export async function executeTool(
         })
         .returning();
 
-      // Send structured brief to owner via SMS
+      // Send structured brief to on-call person (or owner as fallback)
       try {
         const smsText = formatBriefForSms(brief);
-        await smsToOwner(client.ownerPhone, client.twilioPhone, smsText);
+        await notifyOnCall(client, smsText, 'booking');
       } catch (smsErr) {
         console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
       }
@@ -188,11 +189,8 @@ export async function executeTool(
       }
 
       try {
-        await smsToOwner(
-          client.ownerPhone,
-          client.twilioPhone,
-          `EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`,
-        );
+        const emergencyMsg = `🚨 EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`;
+        await notifyOnCall(client, emergencyMsg, 'emergency');
       } catch (smsErr) {
         console.error('EMERGENCY SMS failed:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
         // Still return success — the caller shouldn't be told the SMS failed

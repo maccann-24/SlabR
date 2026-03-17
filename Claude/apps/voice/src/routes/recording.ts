@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { db, calls, leads } from '@serviceline/db';
 import { getClientByTwilioPhone } from '../lib/client-config.js';
-import { smsToOwner } from '../services/notifications.js';
+import { notifyOnCall } from '../services/on-call.js';
 
 interface RecordingBody {
   RecordingUrl?: string;
@@ -79,10 +79,10 @@ export const recordingRoutes: FastifyPluginAsync = async (app) => {
 
           // Notify owner about the voicemail
           try {
-            await smsToOwner(
-              client.ownerPhone,
-              client.twilioPhone,
+            await notifyOnCall(
+              client,
               `📞 New voicemail from ${From} (${RecordingDuration || '?'}s).\nListen: ${RecordingUrl || 'recording unavailable'}`,
+              'voicemail',
             );
           } catch (smsErr) {
             app.log.error(

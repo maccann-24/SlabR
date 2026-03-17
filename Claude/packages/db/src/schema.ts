@@ -146,6 +146,47 @@ export const revenueMetrics = pgTable('revenue_metrics', {
   index('idx_revenue_metrics_client_date').on(table.clientId, table.date),
 ]);
 
+export const onCallContacts = pgTable('on_call_contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull().references(() => clients.id),
+  name: text('name').notNull(),
+  phone: text('phone').notNull(),
+  role: text('role').default('technician'), // technician | manager | owner
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_on_call_contacts_client').on(table.clientId),
+]);
+
+export const onCallSchedule = pgTable('on_call_schedule', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull().references(() => clients.id),
+  contactId: uuid('contact_id').notNull().references(() => onCallContacts.id),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Sunday, 6=Saturday
+  startTime: text('start_time').notNull(), // "08:00" (24h format)
+  endTime: text('end_time').notNull(), // "17:00"
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_on_call_schedule_lookup').on(table.clientId, table.dayOfWeek),
+]);
+
+export const escalations = pgTable('escalations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull().references(() => clients.id),
+  originalContactId: uuid('original_contact_id').references(() => onCallContacts.id),
+  type: text('type').notNull(), // emergency | booking | voicemail
+  message: text('message').notNull(),
+  sentTo: text('sent_to').notNull(), // phone number
+  sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow(),
+  acknowledged: boolean('acknowledged').default(false),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  escalatedToOwner: boolean('escalated_to_owner').default(false),
+  escalatedAt: timestamp('escalated_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_escalations_pending').on(table.clientId, table.acknowledged),
+]);
+
 export const googleOauthTokens = pgTable('google_oauth_tokens', {
   id: uuid('id').primaryKey().defaultRandom(),
   clientId: uuid('client_id').notNull().references(() => clients.id).unique(),
