@@ -127,6 +127,55 @@ describe('Full flow: normal service call', () => {
 // ==========================================================================
 // EMERGENCY FLOW: burst pipe → immediate escalation
 // ==========================================================================
+// ==========================================================================
+// ROUTINE CALLS: "leak" is NOT an emergency
+// ==========================================================================
+describe('Routine calls — not emergencies', () => {
+  it('"leak in my kitchen sink" does NOT trigger emergency escalation', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'I have a leak in my kitchen sink');
+
+    const summary = getSessionSummary(session);
+    expect(summary.emergencyEscalated).toBe(false);
+
+    const emergencyEvents = session.events.filter(
+      (e) => e.type === 'notification' && e.data.type === 'emergency',
+    );
+    expect(emergencyEvents).toHaveLength(0);
+  });
+
+  it('"leaky faucet" does NOT trigger emergency escalation', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'I have a leaky faucet');
+
+    expect(session.emergencyEscalated).toBe(false);
+  });
+
+  it('"dripping pipe under the sink" does NOT trigger emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'I have a dripping pipe under the sink');
+
+    expect(session.emergencyEscalated).toBe(false);
+  });
+
+  it('"slow leak in the bathroom" does NOT trigger emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'There is a slow leak in my bathroom');
+
+    expect(session.emergencyEscalated).toBe(false);
+  });
+
+  it('"AC not cooling" does NOT trigger emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'My AC is not cooling the house');
+
+    expect(session.emergencyEscalated).toBe(false);
+  });
+});
+
+// ==========================================================================
+// REAL EMERGENCIES: these SHOULD trigger escalation
+// ==========================================================================
 describe('Full flow: emergency call', () => {
   it('escalates immediately on emergency keywords', async () => {
     const session = await createSession(DEFAULT_CONFIG);
@@ -150,6 +199,27 @@ describe('Full flow: emergency call', () => {
     const summary = getSessionSummary(session);
     expect(summary.emergencyEscalated).toBe(true);
     expect(summary.appointmentBooked).toBe(false);
+  });
+
+  it('"sewage backing up" triggers emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'Sewage is backing up into the tub!');
+
+    expect(session.emergencyEscalated).toBe(true);
+  });
+
+  it('"no heat" triggers emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, "We have no heat and it's 10 degrees outside");
+
+    expect(session.emergencyEscalated).toBe(true);
+  });
+
+  it('"pipe burst" triggers emergency', async () => {
+    const session = await createSession(DEFAULT_CONFIG);
+    await sendMessage(session, 'A pipe burst in the basement');
+
+    expect(session.emergencyEscalated).toBe(true);
   });
 });
 

@@ -88,6 +88,7 @@ async function main() {
 
   let turnCount = 0;
   const maxTurns = 10;
+  let lastEventIndex = session.events.length; // Track which events we've displayed
 
   while (turnCount < maxTurns) {
     const input = await ask();
@@ -99,9 +100,10 @@ async function main() {
     log('💬 AI:', response, COLORS.cyan);
     console.log();
 
-    // Show events as they happen
-    const recentEvents = session.events.slice(-5);
-    for (const event of recentEvents) {
+    // Show only NEW events since last turn
+    const newEvents = session.events.slice(lastEventIndex);
+    lastEventIndex = session.events.length;
+    for (const event of newEvents) {
       if (event.type === 'tool_call') {
         log('🔧', `Tool called: ${event.data.name}`, COLORS.yellow);
       }

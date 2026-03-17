@@ -50,6 +50,18 @@ describe('Emergency escalation — frantic caller defense', () => {
     expect(prompt).toContain('escalate_emergency');
   });
 
+  it('system prompt clarifies that "leak" alone is NOT an emergency', () => {
+    const prompt = buildSystemPrompt({
+      name: 'Test Plumbing',
+      services: ['plumbing'],
+      serviceArea: 'Austin, TX',
+    });
+
+    expect(prompt).toContain('leak');
+    expect(prompt).toContain('NOT an emergency');
+    expect(prompt).toContain('normal service call');
+  });
+
   it('escalate_emergency tool requires only phone and issue — NOT name or address', () => {
     const tool = voiceTools.find((t) => t.name === 'escalate_emergency')!;
     // In an emergency, caller may be too panicked to give name/address
