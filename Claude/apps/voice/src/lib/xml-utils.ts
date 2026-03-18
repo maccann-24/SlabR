@@ -8,7 +8,7 @@ export function escapeXml(str: string | null | undefined): string {
     .replace(/'/g, '&apos;');
 }
 
-export const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+const E164_REGEX = /^\+[1-9]\d{1,14}$/;
 
 export function isValidPhone(phone: string): boolean {
   return E164_REGEX.test(phone);

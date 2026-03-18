@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";

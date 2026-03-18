@@ -150,6 +150,7 @@ export async function notifyOnCall(
 /**
  * Mark an escalation as acknowledged (e.g., tech replies "OK" via SMS).
  */
+// TODO: unused — planned for Phase 2
 export async function acknowledgeEscalation(escalationId: string): Promise<void> {
   await db
     .update(escalations)

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db, schema } from "@/lib/db";
-import { eq, gte, lt, and, sql, desc } from "drizzle-orm";
+import { eq, gte, lt, and, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 

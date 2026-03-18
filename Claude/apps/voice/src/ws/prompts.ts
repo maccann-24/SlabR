@@ -36,7 +36,7 @@ const MAX_CUSTOM_PROMPT_LENGTH = 500;
  *    operator instructions, making it harder for injected text to blur the
  *    boundary between operator config and core safety rules.
  */
-export function sanitizeCustomPrompt(prompt: string): string {
+function sanitizeCustomPrompt(prompt: string): string {
   const lines = prompt.split('\n');
   const cleanedLines = lines.filter((line) => {
     return !INJECTION_PATTERNS.some((pattern) => pattern.test(line));

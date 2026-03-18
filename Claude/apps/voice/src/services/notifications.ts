@@ -28,6 +28,7 @@ export async function smsToOwner(ownerPhone: string, fromPhone: string, message:
   await client.messages.create({ to: ownerPhone, from: fromPhone, body: message });
 }
 
+// TODO: unused — planned for Phase 2
 export async function smsToCustomer(customerPhone: string, fromPhone: string, message: string) {
   const client = getTwilioClient();
   if (!client) {

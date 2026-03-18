@@ -11,6 +11,7 @@ export async function getClientByTwilioPhone(phone: string): Promise<ClientConfi
   return client ?? null;
 }
 
+// TODO: unused — planned for Phase 2
 export async function getClientById(id: string): Promise<ClientConfig | null> {
   const [client] = await db
     .select()
