@@ -5,18 +5,7 @@ import { buildSystemPrompt } from './prompts.js';
 import { voiceTools, executeTool } from './tools.js';
 import { callSummaryNotification } from '../services/notifications.js';
 import { db, calls, leads } from '@serviceline/db';
-
-const MAX_HISTORY = 20;
-const MAX_TOOL_ITERATIONS = 5;
-const MAX_CALL_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const IDLE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes of silence
-const MAX_WS_MESSAGE_BYTES = 64 * 1024; // 64 KB — ConversationRelay messages are small JSON
-
-// Per-session tool invocation limits
-const TOOL_RATE_LIMITS: Record<string, number> = {
-  escalate_emergency: 2,
-  book_appointment: 5,
-};
+import { AI, VOICE, LIMITS } from '@serviceline/config';
 
 function getAnthropicClient(): Anthropic | null {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -80,13 +69,13 @@ export async function handleWebSocket(ws: WebSocket) {
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   const maxTimer = setTimeout(() => {
     ws.close(1000, 'Max call duration reached');
-  }, MAX_CALL_DURATION_MS);
+  }, VOICE.maxCallDurationMs);
 
   function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
       ws.close(1000, 'Idle timeout');
-    }, IDLE_TIMEOUT_MS);
+    }, VOICE.idleTimeoutMs);
   }
 
   resetIdleTimer();
@@ -99,7 +88,7 @@ export async function handleWebSocket(ws: WebSocket) {
       : ArrayBuffer.isView(data) ? data.byteLength
       : Array.isArray(data) ? data.reduce((s, b) => s + b.length, 0)
       : String(data).length;
-    if (rawLen > MAX_WS_MESSAGE_BYTES) {
+    if (rawLen > LIMITS.wsMaxMessageBytes) {
       console.warn(`Dropping oversized WebSocket message (${rawLen} bytes)`);
       return;
     }
@@ -198,9 +187,9 @@ export async function handleWebSocket(ws: WebSocket) {
       messageHistory.push({ role: 'user', content: prompt.voicePrompt });
 
       // Cap history to prevent memory growth
-      if (messageHistory.length > MAX_HISTORY) {
-        // Keep first message (context) and last MAX_HISTORY-1
-        messageHistory = [messageHistory[0], ...messageHistory.slice(-(MAX_HISTORY - 1))];
+      if (messageHistory.length > AI.maxHistory) { // MAX_HISTORY — now sourced from @serviceline/config
+        // Keep first message (context) and last maxHistory-1
+        messageHistory = [messageHistory[0], ...messageHistory.slice(-(AI.maxHistory - 1))];
       }
 
       const anthropic = getOrCreateAnthropicClient();
@@ -229,7 +218,7 @@ export async function handleWebSocket(ws: WebSocket) {
 
   /** Check if a tool invocation is within session rate limits */
   function checkToolRateLimit(toolName: string): { allowed: boolean; message?: string } {
-    const limit = TOOL_RATE_LIMITS[toolName];
+    const limit = LIMITS.toolLimits[toolName];
     if (limit === undefined) return { allowed: true };
 
     const count = toolInvocationCounts[toolName] || 0;
@@ -249,10 +238,10 @@ export async function handleWebSocket(ws: WebSocket) {
 
   /** Process Claude response, handling tool calls in a loop */
   async function processWithToolLoop(anthropic: Anthropic, ws: WebSocket, clientRef: ClientConfig) {
-    for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+    for (let iteration = 0; iteration < AI.maxToolIterations; iteration++) {
       const response = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 150,
+        model: AI.model,
+        max_tokens: AI.voiceMaxTokens,
         system: systemPrompt,
         tools: voiceTools,
         messages: messageHistory,
@@ -369,10 +358,10 @@ export async function handleWebSocket(ws: WebSocket) {
       if (messageHistory.length > 2) {
         const anthropic = getOrCreateAnthropicClient();
         if (anthropic) {
-          const historyForSummary = messageHistory.slice(0, 30);
+          const historyForSummary = messageHistory.slice(0, AI.maxSummaryHistory);
           const res = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 200,
+            model: AI.model,
+            max_tokens: AI.summaryMaxTokens,
             system:
               'Summarize this phone call in 2-3 sentences. Include: what the caller needed, any appointment booked, and any follow-up required.',
             messages: [

@@ -12,8 +12,7 @@ import { voiceTools, executeTool } from '../ws/tools.js';
 import { buildCallBrief, formatBriefForSms, CallBrief } from '../lib/call-brief.js';
 import { resolveOnCall, OnCallResult } from '../services/on-call.js';
 import { db, clients, leads, calls, appointments, eq } from '@serviceline/db';
-
-const MAX_TOOL_ITERATIONS = 5;
+import { AI } from '@serviceline/config';
 
 export interface SimulatorConfig {
   clientId?: string;
@@ -149,10 +148,10 @@ async function processWithToolLoop(
   session: SimulatorSession,
   anthropic: Anthropic,
 ): Promise<string> {
-  for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+  for (let iteration = 0; iteration < AI.maxToolIterations; iteration++) {
     const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 150,
+      model: AI.model,
+      max_tokens: AI.voiceMaxTokens,
       system: session.systemPrompt,
       tools: voiceTools,
       messages: session.messageHistory,

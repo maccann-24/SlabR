@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db, schema } from "@/lib/db";
 import { eq, gte, lt, and, sql } from "drizzle-orm";
+import { BUSINESS } from "@serviceline/config";
 
 export const dynamic = "force-dynamic";
 
@@ -152,7 +153,7 @@ export default async function AdminDashboard() {
     (c) => c.status === "active" || c.status === "pilot"
   );
   const mrr = activeClients.reduce((sum, c) => {
-    return sum + (c.plan === "pro" ? 499 : 199);
+    return sum + (c.plan === "pro" ? BUSINESS.pricing.pro : BUSINESS.pricing.starter);
   }, 0);
 
   const revenueRescued = Math.round(revenueThisMonthResult[0]?.total ?? 0);
@@ -365,7 +366,7 @@ export default async function AdminDashboard() {
                 const clientCalls = metrics?.calls ?? 0;
                 const clientAppts = metrics?.appointments ?? 0;
                 const clientReviews = metrics?.reviews ?? 0;
-                const subscriptionCost = client.plan === "pro" ? 499 : 199;
+                const subscriptionCost = client.plan === "pro" ? BUSINESS.pricing.pro : BUSINESS.pricing.starter;
                 const clientROI =
                   subscriptionCost > 0
                     ? (clientRevenue / subscriptionCost).toFixed(1)
