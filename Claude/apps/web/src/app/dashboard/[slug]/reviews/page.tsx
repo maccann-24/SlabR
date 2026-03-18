@@ -41,39 +41,39 @@ export default async function ReviewsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Review Velocity</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-white">Review Velocity</h1>
+      <p className="mt-1 text-sm text-slate-500">
         Track review requests and responses
       </p>
 
       {/* Stats Cards */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Reviews Requested
           </p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">
+          <p className="mt-2 text-3xl font-bold text-white">
             {totalRequested}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Reviews Received
           </p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">
+          <p className="mt-2 text-3xl font-bold text-emerald-400">
             {totalReceived}
           </p>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-slate-500">
             {totalRequested > 0
               ? `${Math.round((totalReceived / totalRequested) * 100)}% response rate`
               : "No requests yet"}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Average Rating
           </p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">
+          <p className="mt-2 text-3xl font-bold text-white">
             {avgRating > 0 ? avgRating.toFixed(1) : "-"}
           </p>
           {avgRating > 0 && (
@@ -81,7 +81,7 @@ export default async function ReviewsPage({
               {[1, 2, 3, 4, 5].map((star) => (
                 <svg
                   key={star}
-                  className={`h-4 w-4 ${star <= Math.round(avgRating) ? "text-yellow-400" : "text-gray-200"}`}
+                  className={`h-4 w-4 ${star <= Math.round(avgRating) ? "text-yellow-400" : "text-slate-700"}`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -95,34 +95,34 @@ export default async function ReviewsPage({
 
       {/* Recent Review Requests */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Recent Review Requests
         </h2>
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/50">
+          <table className="min-w-full divide-y divide-slate-800">
+            <thead className="bg-slate-800/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                   Phone
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                   Sent
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                   Received
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                   Rating
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-800/50">
               {recentReviews.map((review) => (
                 <tr key={review.id}>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className="px-4 py-3 text-sm text-slate-400">
                     {review.contactPhone}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-slate-500">
                     {review.requestSentAt
                       ? new Date(review.requestSentAt).toLocaleDateString(
                           "en-US",
@@ -132,16 +132,16 @@ export default async function ReviewsPage({
                   </td>
                   <td className="px-4 py-3">
                     {review.reviewReceived ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                      <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
                         Yes
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                      <span className="inline-flex items-center rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400 ring-1 ring-slate-500/20">
                         Pending
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
+                  <td className="px-4 py-3 text-sm text-white">
                     {review.reviewRating ? (
                       <span className="flex items-center gap-1">
                         {review.reviewRating}
@@ -163,7 +163,7 @@ export default async function ReviewsPage({
                 <tr>
                   <td
                     colSpan={4}
-                    className="px-4 py-8 text-center text-sm text-gray-400"
+                    className="px-4 py-8 text-center text-sm text-slate-600"
                   >
                     No review requests yet
                   </td>

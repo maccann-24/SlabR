@@ -4,7 +4,8 @@ import { isValidPhone } from '../lib/xml-utils.js';
 import { smsToOwner } from '../services/notifications.js';
 import { notifyOnCall } from '../services/on-call.js';
 import { buildCallBrief, formatBriefForSms } from '../lib/call-brief.js';
-import { db, appointments } from '@serviceline/db';
+import { db, appointments, leads } from '@serviceline/db';
+import { eq } from 'drizzle-orm';
 
 export const voiceTools: Anthropic.Tool[] = [
   {
@@ -37,6 +38,7 @@ export const voiceTools: Anthropic.Tool[] = [
         notes: { type: 'string', description: 'Extra context from the conversation that would help the technician (e.g., "unit is 8 years old", "pilot light may be out", "tenant property")' },
         special_instructions: { type: 'string', description: 'Special requests from the caller (e.g., "quote before any work", "call before arriving", "enter through side gate")' },
         urgency: { type: 'string', enum: ['normal', 'same_day', 'emergency'], description: 'How urgent the job is' },
+        category: { type: 'string', description: 'Issue category from the industry template (e.g., leak_repair, ac_repair, general_pest). Classify the caller\'s issue into the most appropriate category.' },
       },
       required: ['name', 'phone', 'address', 'issue', 'datetime'],
     },
@@ -69,6 +71,7 @@ interface ToolInput {
   notes?: string;
   special_instructions?: string;
   urgency?: string;
+  category?: string;
 }
 
 export async function executeTool(
@@ -163,6 +166,18 @@ export async function executeTool(
         await notifyOnCall(client, smsText, 'booking');
       } catch (smsErr) {
         console.error('SMS notification failed for booking:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
+      }
+
+      // Update lead with issue category if we have one
+      if (leadId && input.category) {
+        try {
+          await db
+            .update(leads)
+            .set({ issueCategory: input.category })
+            .where(eq(leads.id, leadId));
+        } catch (err) {
+          console.error('Failed to update lead issueCategory:', err instanceof Error ? err.message : 'Unknown error');
+        }
       }
 
       return {

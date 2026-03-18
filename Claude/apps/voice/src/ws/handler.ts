@@ -141,6 +141,7 @@ export async function handleWebSocket(ws: WebSocket) {
         name: client.name,
         services: client.services as string[],
         serviceArea: client.serviceArea,
+        industry: client.industry,
         customPrompt: client.aiSystemPrompt,
       });
 

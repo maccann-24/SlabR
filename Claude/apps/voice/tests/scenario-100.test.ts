@@ -190,11 +190,12 @@ describe('Cat 2: Emergency & Urgent (21-35)', () => {
   });
 
   it('prompt has emergency keywords for all real emergencies', () => {
-    expect(PROMPT).toContain('burst pipe');
-    expect(PROMPT).toContain('gas smell');
+    // Emergency definitions are now generated from the plumbing template
+    expect(PROMPT).toContain('Burst or spraying pipe');
+    expect(PROMPT).toContain('Gas smell');
     expect(PROMPT).toContain('flooding');
-    expect(PROMPT).toContain('sewage');
-    expect(PROMPT).toContain('no heat');
+    expect(PROMPT).toContain('Sewage backup');
+    expect(PROMPT).toContain('No running water');
     expect(PROMPT).toContain('IMMEDIATELY');
   });
 
@@ -465,11 +466,12 @@ describe('Cross-category: prompt completeness', () => {
   });
 
   it('has emergency keywords covering all 15 emergency scenarios', () => {
-    expect(PROMPT).toContain('burst pipe');
-    expect(PROMPT).toContain('gas smell');
+    // Emergency definitions are now generated from the plumbing template
+    expect(PROMPT).toContain('Burst or spraying pipe');
+    expect(PROMPT).toContain('Gas smell');
     expect(PROMPT).toContain('flooding');
-    expect(PROMPT).toContain('sewage');
-    expect(PROMPT).toContain('no heat');
+    expect(PROMPT).toContain('Sewage backup');
+    expect(PROMPT).toContain('No running water');
   });
 
   it('has booking tools for all 20 scheduling scenarios', () => {
@@ -486,11 +488,11 @@ describe('Cross-category: prompt completeness', () => {
   it('leak disambiguation covers scenarios 2, 22, 23, 30, 34', () => {
     expect(PROMPT).toContain('NOT an emergency');
     expect(PROMPT).toContain('normal service call');
-    expect(PROMPT).toContain('active flooding');
+    expect(PROMPT).toContain('Active flooding');
   });
 
-  it('prompt word count is under 600 (voice AI best practice)', () => {
+  it('prompt word count is under 1100 (industry templates add necessary context)', () => {
     const wordCount = PROMPT.split(/\s+/).length;
-    expect(wordCount).toBeLessThan(750);
+    expect(wordCount).toBeLessThan(1100);
   });
 });

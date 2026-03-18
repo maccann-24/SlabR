@@ -1,7 +1,10 @@
+import { getTemplate, type IndustryTemplate } from '@serviceline/templates';
+
 interface PromptContext {
   name: string;
   services: string[];
   serviceArea: string;
+  industry?: string;
   customPrompt?: string | null;
 }
 
@@ -45,10 +48,14 @@ export function sanitizeCustomPrompt(prompt: string): string {
 
 export function buildSystemPrompt(ctx: PromptContext): string {
   const serviceList = ctx.services.join(', ');
+  const template = ctx.industry ? getTemplate(ctx.industry) : getTemplate('plumbing');
 
   const customSection = ctx.customPrompt
     ? buildCustomPromptSection(ctx.customPrompt)
     : '';
+
+  // ── Industry-specific sections ──
+  const industrySection = template ? buildIndustrySection(template) : '';
 
   return `You are an AI phone assistant for ${ctx.name}, a ${serviceList} company serving ${ctx.serviceArea}.
 
@@ -58,7 +65,7 @@ VOICE STYLE:
 - This is a PHONE CALL. Keep every response under 2 sentences and under 35 words.
 - Start with the answer or action. Never start with "Great question!", "I'd be happy to help!", "Absolutely!", or any preamble.
 - Never repeat back what the caller just said. They know what they said.
-- Never list multiple options when one will do. If they need AC repair, say "I can get someone out there" — don't list every service you offer.
+- Never list multiple options when one will do. If they need a service call, say "I can get someone out there" — don't list every service you offer.
 - Ask ONE question at a time. Never stack questions.
 - If you don't know something, say "I'm not sure about that — the technician can answer that when they come out." Never guess or make up information.
 - Use plain words. Say "fix" not "remediate." Say "come out" not "dispatch a technician." Say "sounds good" not "certainly, I understand."
@@ -66,12 +73,12 @@ VOICE STYLE:
 
 RULES:
 - Collect: caller's name, address, and what's going on. You already have their phone number from caller ID.
-- Never quote exact prices. Say "the tech will give you a quote on-site."
+- Never quote exact prices. ${template?.pricingDisclaimer ?? 'Say "the tech will give you a quote on-site."'}
 - Never diagnose. Say "sounds like it could be X, but our tech will take a look."
 - Never promise timelines, warranties, guarantees, or refunds.
-- For emergencies (burst pipe, gas smell, flooding, sewage backup, no heat in winter), use the escalate_emergency tool IMMEDIATELY — just get their address and escalate. Do NOT ask extra questions during emergencies.
-- A "leak" by itself is NOT an emergency — it's a normal service call. Only escalate if the caller describes active flooding, water spraying, or property damage happening RIGHT NOW. A dripping faucet, slow leak, or "leak under the sink" is routine — book an appointment, don't escalate.
+${buildEmergencyRules(template)}
 - When you have enough info, offer to book using check_availability and book_appointment tools.
+- When booking, you MUST classify the issue into one of these categories: ${template ? template.issueCategories.join(', ') : 'service, emergency, other'}. Use the "category" field on the book_appointment tool.
 - If the caller asks about pricing, say the tech will give a free on-site estimate.
 - If the caller asks for a person, a human, or a manager: "Sure thing! I'll have the owner call you right back." Then use escalate_emergency (issue: "Customer requested human callback").
 - If asked "are you a robot?": "Yep, I'm an AI assistant for ${ctx.name}. I can book you an appointment or have someone call you back — what works better?"
@@ -81,9 +88,69 @@ RULES:
 - If the caller is angry, frustrated, or threatening bad reviews: stay calm. Say "I'm sorry you're dealing with this. Let me get the owner on the phone so they can make it right." Then use escalate_emergency (issue: "Upset customer — needs owner callback: [brief summary]"). Never argue, never make excuses, never promise refunds or compensation.
 - Never comment on competitors, match prices, or compare services. Say "I can't speak to other companies, but I can get our tech out to take a look."
 - Never give legal, medical, or insurance advice. For legal/insurance documentation requests, say "Our tech can provide documentation of the work — I'll make a note of what you need."
-- If the caller asks multiple questions at once, address the most urgent one first and say "Let's start with [most urgent]. We can cover the rest when the tech is out."
 - For callers who seem confused, elderly, or unsure: be patient, use simple words, and offer to have someone call them back. Never rush them.
-${customSection}`;
+- If the caller asks multiple questions at once, address the most urgent one first and say "Let's start with [most urgent]. We can cover the rest when the tech is out."
+${industrySection}${customSection}`;
+}
+
+/**
+ * Builds emergency rules from the industry template's definitions.
+ * Falls back to generic plumbing-centric rules if no template found.
+ */
+function buildEmergencyRules(template: IndustryTemplate | null): string {
+  if (!template || template.emergencyDefinitions.length === 0) {
+    // Industry with no emergencies (e.g. painting) — skip emergency escalation rules
+    if (template && template.emergencyDefinitions.length === 0) {
+      return `- This industry rarely has true emergencies. Only escalate if the caller describes an immediate safety hazard or property damage happening RIGHT NOW.`;
+    }
+    // Fallback generic
+    return `- For emergencies (burst pipe, gas smell, flooding, sewage backup, no heat in winter), use the escalate_emergency tool IMMEDIATELY — just get their address and escalate. Do NOT ask extra questions during emergencies.
+- A "leak" by itself is NOT an emergency — it's a normal service call. Only escalate if the caller describes active flooding, water spraying, or property damage happening RIGHT NOW. A dripping faucet, slow leak, or "leak under the sink" is routine — book an appointment, don't escalate.`;
+  }
+
+  const emergencyList = template.emergencyDefinitions
+    .map((def) => `  • ${def}`)
+    .join('\n');
+
+  return `- For emergencies, use the escalate_emergency tool IMMEDIATELY — just get their address and escalate. Do NOT ask extra questions during emergencies.
+- These are emergencies for this type of business:
+${emergencyList}
+- Anything NOT on that list is a normal service call — book an appointment, don't escalate. Only escalate if the caller describes immediate danger or active property damage.`;
+}
+
+/**
+ * Builds the industry-specific section with prompt rules, FAQ, and seasonal context.
+ */
+function buildIndustrySection(template: IndustryTemplate): string {
+  const parts: string[] = [];
+
+  // Industry-specific collection rules
+  if (template.promptRules.length > 0) {
+    const rules = template.promptRules
+      .map((rule) => `- ${rule}`)
+      .join('\n');
+    parts.push(`\nINDUSTRY-SPECIFIC RULES:\n${rules}`);
+  }
+
+  // Seasonal context
+  const currentMonth = new Date().getMonth() + 1; // 1-indexed
+  const activeHints = template.seasonalHints.filter((h) =>
+    h.months.includes(currentMonth)
+  );
+  if (activeHints.length > 0) {
+    const hints = activeHints.map((h) => `- ${h.hint}`).join('\n');
+    parts.push(`\nSEASONAL CONTEXT (use naturally, don't force it):\n${hints}`);
+  }
+
+  // FAQ — safe answers for common questions
+  if (template.faq.length > 0) {
+    const faqs = template.faq
+      .map((f) => `Q: "${f.q}" → A: "${f.a}"`)
+      .join('\n');
+    parts.push(`\nCOMMON QUESTIONS (use these answers when relevant):\n${faqs}`);
+  }
+
+  return parts.join('\n');
 }
 
 /**

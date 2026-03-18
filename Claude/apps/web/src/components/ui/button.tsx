@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -42,19 +43,59 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Slot merges its props onto its single child element instead of rendering
+ * a wrapper. This gives us Radix-style `asChild` support with Base UI.
+ */
+const Slot = React.forwardRef<
+  HTMLElement,
+  React.PropsWithChildren<React.HTMLAttributes<HTMLElement>>
+>(({ children, ...props }, ref) => {
+  if (React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+      ...props,
+      ref,
+      className: cn(
+        (props as Record<string, unknown>).className as string | undefined,
+        (children.props as Record<string, unknown>).className as string | undefined
+      ),
+    })
+  }
+  return <>{children}</>
+})
+Slot.displayName = "Slot"
+
+interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
+  asChild = false,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
+  const mergedClassName = cn(buttonVariants({ variant, size, className }))
+
+  if (asChild) {
+    return (
+      <Slot className={mergedClassName} {...(props as React.HTMLAttributes<HTMLElement>)}>
+        {props.children}
+      </Slot>
+    )
+  }
+
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={mergedClassName}
       {...props}
     />
   )
 }
 
 export { Button, buttonVariants }
+export type { ButtonProps }

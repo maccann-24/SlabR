@@ -23,6 +23,7 @@ export interface SimulatorConfig {
   services: string[];
   serviceArea: string;
   callerPhone: string;
+  industry?: string;
   plan?: 'starter' | 'pro';
   useRealAI?: boolean; // false = mock responses
 }
@@ -67,6 +68,7 @@ export async function createSession(config: SimulatorConfig): Promise<SimulatorS
     name: config.businessName,
     services: config.services,
     serviceArea: config.serviceArea,
+    industry: config.industry ?? 'plumbing',
   });
 
   // Create or find client in DB

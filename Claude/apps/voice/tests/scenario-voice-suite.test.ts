@@ -290,10 +290,11 @@ describe('Failure mode prevention', () => {
   });
 
   it('FM2: AI identifies emergency language', () => {
-    expect(PROMPT).toContain('burst pipe');
-    expect(PROMPT).toContain('gas smell');
+    // Emergency definitions are now generated from the plumbing template
+    expect(PROMPT).toContain('Burst or spraying pipe');
+    expect(PROMPT).toContain('Gas smell');
     expect(PROMPT).toContain('flooding');
-    expect(PROMPT).toContain('sewage');
+    expect(PROMPT).toContain('Sewage backup');
     expect(PROMPT).toContain('IMMEDIATELY');
   });
 

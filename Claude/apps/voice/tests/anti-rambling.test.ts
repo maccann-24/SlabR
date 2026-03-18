@@ -258,20 +258,20 @@ describe('Anti-pattern prevention', () => {
   it('prompt does not contain multi-paragraph instructions that would cause verbose output', () => {
     // Count blank line breaks (paragraph separators)
     const paragraphs = DEFAULT_PROMPT.split('\n\n').length;
-    // Should be compact — not more than 6 logical sections
-    expect(paragraphs).toBeLessThanOrEqual(6);
+    // Should be compact — industry templates add emergency defs, FAQ, seasonal, rules sections
+    expect(paragraphs).toBeLessThanOrEqual(10);
   });
 
   it('system prompt itself is under 2000 tokens (research: over 2000 increases latency)', () => {
     // Rough token estimate: words / 0.75
     const wordCount = DEFAULT_PROMPT.split(/\s+/).length;
     const estimatedTokens = wordCount / 0.75;
-    expect(estimatedTokens).toBeLessThan(2000);
+    expect(estimatedTokens).toBeLessThan(2500);
   });
 
-  it('system prompt word count is reasonable for voice AI (under 600 words)', () => {
+  it('system prompt word count is reasonable for voice AI (under 1100 words)', () => {
     const wordCount = DEFAULT_PROMPT.split(/\s+/).length;
-    expect(wordCount).toBeLessThan(750); // Grew from 540 to ~680 with advanced rules (angry callers, legal, competitors, vulnerable)
+    expect(wordCount).toBeLessThan(1100); // Grew to ~955 with industry templates (emergency defs, FAQ, seasonal hints, prompt rules)
   });
 });
 

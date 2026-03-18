@@ -23,14 +23,15 @@ describe('Emergency escalation — frantic caller defense', () => {
       serviceArea: 'Austin, TX',
     });
 
-    // Every emergency scenario a plumber/HVAC caller might describe
+    // Every emergency scenario a plumber caller might describe
+    // These match the plumbing template's emergencyDefinitions
     const emergencyTerms = [
-      'emergency',
-      'flooding',
-      'gas smell',
-      'no heat',
-      'burst',
-      'sewage',
+      'emergenc',      // "emergencies" / "emergency"
+      'flooding',      // "Active flooding or standing water"
+      'gas smell',     // "Gas smell or suspected gas leak"
+      'burst',         // "Burst or spraying pipe"
+      'sewage',        // "Sewage backup into the home"
+      'no running water', // "No running water to entire house"
     ];
 
     for (const term of emergencyTerms) {

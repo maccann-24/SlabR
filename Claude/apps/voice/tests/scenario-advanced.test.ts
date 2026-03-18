@@ -518,9 +518,9 @@ describe('Cross-category: advanced prompt completeness', () => {
     expect(PROMPT).toContain('tech can provide documentation');
   });
 
-  it('prompt is still under 600 words after additions', () => {
+  it('prompt is still under 1100 words after additions', () => {
     const wordCount = PROMPT.split(/\s+/).length;
-    expect(wordCount).toBeLessThan(700); // Slightly higher ceiling for advanced rules
+    expect(wordCount).toBeLessThan(1100); // Industry templates add emergency defs, FAQ, seasonal hints, prompt rules
   });
 
   it('prompt still has all original rules (nothing removed)', () => {

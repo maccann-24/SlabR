@@ -11,11 +11,11 @@ function Badge({
   color: "green" | "yellow" | "red" | "blue" | "gray";
 }) {
   const colors = {
-    green: "bg-emerald-100 text-emerald-800",
-    yellow: "bg-yellow-100 text-yellow-800",
-    red: "bg-red-100 text-red-800",
-    blue: "bg-blue-100 text-blue-800",
-    gray: "bg-gray-100 text-gray-600",
+    green: "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
+    yellow: "bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/20",
+    red: "bg-red-500/10 text-red-400 ring-1 ring-red-500/20",
+    blue: "bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20",
+    gray: "bg-slate-500/10 text-slate-400 ring-1 ring-slate-500/20",
   };
   return (
     <span
@@ -57,51 +57,51 @@ export default async function LeadsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Lead Feed</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-white">Lead Feed</h1>
+      <p className="mt-1 text-sm text-slate-500">
         Latest 50 leads across all clients
       </p>
 
-      <div className="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="mt-8 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/50">
+        <table className="min-w-full divide-y divide-slate-800">
+          <thead className="bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Client
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Contact
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Phone
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Issue
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Source
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                 Created
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-800/50">
             {leadsWithClients.map(({ lead, clientName }) => (
-              <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+              <tr key={lead.id} className="hover:bg-slate-800/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-medium text-white">
                   {clientName}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-white">
                   {lead.contactName ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-3 text-sm text-slate-400">
                   {lead.contactPhone}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                <td className="px-4 py-3 text-sm text-slate-400 max-w-xs truncate">
                   {lead.issueDescription ?? "-"}
                 </td>
                 <td className="px-4 py-3">
@@ -110,10 +110,10 @@ export default async function LeadsPage() {
                     color={leadStatusColor(lead.status)}
                   />
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
+                <td className="px-4 py-3 text-sm text-slate-500">
                   {lead.source}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
+                <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">
                   {lead.createdAt
                     ? new Date(lead.createdAt).toLocaleString("en-US", {
                         month: "short",

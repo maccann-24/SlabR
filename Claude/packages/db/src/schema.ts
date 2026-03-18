@@ -21,6 +21,7 @@ export const clients = pgTable('clients', {
   googleCalendarId: text('google_calendar_id'),
   recordingConsentRequired: boolean('recording_consent_required').default(true),
   aiSystemPrompt: text('ai_system_prompt'),
+  industry: text('industry').notNull().default('plumbing'), // plumbing|hvac|pest|painting|lawn|electrical
   plan: text('plan').notNull(), // 'starter' | 'pro'
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
@@ -186,6 +187,16 @@ export const escalations = pgTable('escalations', {
 }, (table) => [
   index('idx_escalations_pending').on(table.clientId, table.acknowledged),
 ]);
+
+export const pilotSignups = pgTable('pilot_signups', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  businessName: text('business_name').notNull(),
+  ownerName: text('owner_name'),
+  phone: text('phone').notNull(),
+  industry: text('industry').default('plumbing'),
+  status: text('status').default('pending'), // pending | contacted | converted | declined
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
 
 export const googleOauthTokens = pgTable('google_oauth_tokens', {
   id: uuid('id').primaryKey().defaultRandom(),

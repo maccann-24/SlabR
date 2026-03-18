@@ -1,16 +1,8 @@
 import { db, schema } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
-const ALL_SERVICES = [
-  "plumbing",
-  "drain",
-  "water_heater",
-  "sewer",
-  "gas_line",
-  "hvac",
-  "fixture_install",
-] as const;
+import IndustryServiceSelector from "@/components/admin/IndustryServiceSelector";
+import { getTemplateOrThrow } from "@serviceline/templates";
 
 function generateSlug(name: string): string {
   const base = name
@@ -44,43 +36,43 @@ export default async function NewClientPage({
   if (params.success === "1") {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Client Created</h1>
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-8 shadow-sm max-w-lg">
+        <h1 className="text-2xl font-bold text-white">Client Created</h1>
+        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-8 max-w-lg">
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-              <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
+              <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Client created successfully!</h2>
+            <h2 className="text-lg font-semibold text-white">Client created successfully!</h2>
           </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-6">
-            <p className="text-sm font-medium text-amber-800">
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 mb-6">
+            <p className="text-sm font-medium text-amber-400">
               Save this PIN (shown only once):
             </p>
-            <p className="mt-1 text-2xl font-bold text-amber-900 font-mono tracking-wider">
+            <p className="mt-1 text-2xl font-bold text-amber-500 font-mono tracking-wider">
               {params.pin}
             </p>
           </div>
 
           <div className="space-y-3">
             <div>
-              <p className="text-xs font-medium text-gray-500">Dashboard URL</p>
-              <p className="mt-1 text-sm text-gray-900 font-mono">/dashboard/{params.slug}</p>
+              <p className="text-xs font-medium text-slate-500">Dashboard URL</p>
+              <p className="mt-1 text-sm text-white font-mono">/dashboard/{params.slug}</p>
             </div>
           </div>
 
           <div className="mt-6 flex gap-3">
             <Link
               href={`/admin/clients/${params.clientId}`}
-              className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+              className="inline-flex items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400 transition-colors"
             >
               View Client
             </Link>
             <Link
               href="/admin/clients"
-              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
             >
               All Clients
             </Link>
@@ -98,9 +90,12 @@ export default async function NewClientPage({
     const ownerPhone = formData.get("ownerPhone") as string;
     const serviceArea = formData.get("serviceArea") as string;
     const plan = formData.get("plan") as string;
+    const industry = (formData.get("industry") as string) || "plumbing";
+    const aiSystemPrompt = (formData.get("aiSystemPrompt") as string) || null;
 
-    const services = ALL_SERVICES.filter(
-      (s) => formData.get(`service_${s}`) === "on"
+    const template = getTemplateOrThrow(industry);
+    const services = template.services.filter(
+      (s: string) => formData.get(`service_${s}`) === "on"
     );
 
     if (!name || !ownerName || !ownerPhone) {
@@ -131,8 +126,11 @@ export default async function NewClientPage({
         forwardPhone: ownerPhone,
         twilioPhone,
         businessHours: defaultBusinessHours,
-        services: services.length > 0 ? services : ["plumbing"],
+        industry,
+        services: services.length > 0 ? services : [template.services[0]],
         serviceArea: serviceArea || "Austin, TX and surrounding areas",
+        avgTicketValue: template.defaultTicketValue.toString(),
+        aiSystemPrompt,
         plan: plan || "starter",
         dashboardPin: pin,
         status: "active",
@@ -148,28 +146,25 @@ export default async function NewClientPage({
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">New Client</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-white">New Client</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Add a new ServiceLine AI customer
           </p>
         </div>
         <Link
           href="/admin/clients"
-          className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
         >
           Cancel
         </Link>
       </div>
 
       <form action={createClient} className="mt-8 max-w-2xl">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
           {/* Business Name */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Business Name <span className="text-red-500">*</span>
+            <label htmlFor="name" className="block text-sm font-medium text-slate-300">
+              Business Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -177,17 +172,14 @@ export default async function NewClientPage({
               name="name"
               required
               placeholder="Mike's Plumbing & Heating"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+              className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Owner Name */}
           <div>
-            <label
-              htmlFor="ownerName"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Owner Name <span className="text-red-500">*</span>
+            <label htmlFor="ownerName" className="block text-sm font-medium text-slate-300">
+              Owner Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -195,17 +187,14 @@ export default async function NewClientPage({
               name="ownerName"
               required
               placeholder="Mike Johnson"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+              className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Owner Phone */}
           <div>
-            <label
-              htmlFor="ownerPhone"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Owner Phone <span className="text-red-500">*</span>
+            <label htmlFor="ownerPhone" className="block text-sm font-medium text-slate-300">
+              Owner Phone <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -213,16 +202,13 @@ export default async function NewClientPage({
               name="ownerPhone"
               required
               placeholder="+15551234567"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+              className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Service Area */}
           <div>
-            <label
-              htmlFor="serviceArea"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="serviceArea" className="block text-sm font-medium text-slate-300">
               Service Area
             </label>
             <input
@@ -230,62 +216,42 @@ export default async function NewClientPage({
               id="serviceArea"
               name="serviceArea"
               defaultValue="Austin, TX and surrounding areas"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+              className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 
-          {/* Services */}
-          <fieldset>
-            <legend className="block text-sm font-medium text-gray-700">
-              Services
-            </legend>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {ALL_SERVICES.map((service) => (
-                <label
-                  key={service}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    name={`service_${service}`}
-                    defaultChecked={service === "plumbing"}
-                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  {service.replace(/_/g, " ")}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          {/* Industry + Services + AI Prompt (client component) */}
+          <IndustryServiceSelector />
 
           {/* Plan */}
           <fieldset>
-            <legend className="block text-sm font-medium text-gray-700">
+            <legend className="block text-sm font-medium text-slate-300">
               Plan
             </legend>
             <div className="mt-2 flex gap-4">
-              <label className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 cursor-pointer hover:bg-gray-50 flex-1">
+              <label className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3 cursor-pointer hover:border-slate-600 transition-colors flex-1">
                 <input
                   type="radio"
                   name="plan"
                   value="starter"
                   defaultChecked
-                  className="h-4 w-4 border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="h-4 w-4 border-slate-600 text-amber-500 focus:ring-amber-500"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Starter</p>
-                  <p className="text-xs text-gray-500">$199/mo</p>
+                  <p className="text-sm font-medium text-white">Starter</p>
+                  <p className="text-xs text-slate-500">$199/mo</p>
                 </div>
               </label>
-              <label className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 cursor-pointer hover:bg-gray-50 flex-1">
+              <label className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3 cursor-pointer hover:border-slate-600 transition-colors flex-1">
                 <input
                   type="radio"
                   name="plan"
                   value="pro"
-                  className="h-4 w-4 border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="h-4 w-4 border-slate-600 text-amber-500 focus:ring-amber-500"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Pro</p>
-                  <p className="text-xs text-gray-500">$499/mo</p>
+                  <p className="text-sm font-medium text-white">Pro</p>
+                  <p className="text-xs text-slate-500">$499/mo</p>
                 </div>
               </label>
             </div>
@@ -296,13 +262,13 @@ export default async function NewClientPage({
         <div className="mt-6 flex gap-3">
           <button
             type="submit"
-            className="inline-flex items-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
+            className="inline-flex items-center rounded-lg bg-amber-500 px-6 py-2.5 text-sm font-medium text-black hover:bg-amber-400 transition-colors shadow-sm"
           >
             Create Client
           </button>
           <Link
             href="/admin/clients"
-            className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
           >
             Cancel
           </Link>

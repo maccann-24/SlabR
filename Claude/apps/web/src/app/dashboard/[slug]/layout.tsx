@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { DashboardNav } from "@/components/dashboard/DashboardNav";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,9 @@ export default async function DashboardLayout({
 
   const navItems = [
     { href: `/dashboard/${slug}/overview`, label: "Overview", icon: "📊" },
+    { href: `/dashboard/${slug}/analytics`, label: "Analytics", icon: "📈" },
+    { href: `/dashboard/${slug}/clients`, label: "Customers", icon: "👤" },
+    { href: `/dashboard/${slug}/services`, label: "Services", icon: "🔧" },
     { href: `/dashboard/${slug}/calls`, label: "Calls", icon: "📞" },
     { href: `/dashboard/${slug}/reviews`, label: "Reviews", icon: "⭐" },
   ];
@@ -35,18 +39,11 @@ export default async function DashboardLayout({
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
               <h1 className="text-lg font-bold text-white">{businessName}</h1>
-              <nav className="hidden sm:flex gap-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
-                  >
-                    <span className="mr-1.5">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
+              <DashboardNav
+                navItems={navItems}
+                slug={slug}
+                className="hidden sm:flex gap-1"
+              />
             </div>
             <p className="text-xs text-slate-600">
               Powered by <span className="text-slate-400">ServiceLine</span>
@@ -54,18 +51,11 @@ export default async function DashboardLayout({
             </p>
           </div>
           {/* Mobile nav */}
-          <nav className="flex sm:hidden gap-1 pb-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
-              >
-                <span className="mr-1">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <DashboardNav
+            navItems={navItems}
+            slug={slug}
+            className="flex sm:hidden gap-1 pb-3"
+          />
         </div>
       </header>
 

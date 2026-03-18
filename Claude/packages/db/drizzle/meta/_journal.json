@@ -29,6 +29,20 @@
       "when": 1773724168310,
       "tag": "0003_stale_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773900000000,
+      "tag": "0004_add_industry",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773798975269,
+      "tag": "0005_slim_chameleon",
+      "breakpoints": true
     }
   ]
 }

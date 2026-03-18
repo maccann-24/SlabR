@@ -17,11 +17,11 @@ function Badge({
   color: "green" | "yellow" | "red" | "blue" | "gray";
 }) {
   const colors = {
-    green: "bg-emerald-100 text-emerald-800",
-    yellow: "bg-yellow-100 text-yellow-800",
-    red: "bg-red-100 text-red-800",
-    blue: "bg-blue-100 text-blue-800",
-    gray: "bg-gray-100 text-gray-600",
+    green: "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
+    yellow: "bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/20",
+    red: "bg-red-500/10 text-red-400 ring-1 ring-red-500/20",
+    blue: "bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20",
+    gray: "bg-slate-500/10 text-slate-400 ring-1 ring-slate-500/20",
   };
   return (
     <span
@@ -95,14 +95,14 @@ export default async function CallsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Call History</h1>
-      <p className="mt-1 text-sm text-gray-500">Last 30 calls</p>
+      <h1 className="text-2xl font-bold text-white">Call History</h1>
+      <p className="mt-1 text-sm text-slate-500">Last 30 calls</p>
 
       <div className="mt-6 space-y-3">
         {recentCalls.map((call) => (
           <div
             key={call.id}
-            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex items-center gap-3">
@@ -110,11 +110,11 @@ export default async function CallsPage({
                   label={callStatusLabel(call.status)}
                   color={callStatusColor(call.status)}
                 />
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-white">
                   {redactPhone(call.callerPhone)}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-xs text-gray-400">
+              <div className="flex items-center gap-4 text-xs text-slate-500">
                 <span>{formatDuration(call.durationSeconds)}</span>
                 <span>
                   {call.createdAt
@@ -129,14 +129,14 @@ export default async function CallsPage({
               </div>
             </div>
             {call.aiSummary && (
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
                 {call.aiSummary}
               </p>
             )}
           </div>
         ))}
         {recentCalls.length === 0 && (
-          <p className="text-center text-sm text-gray-400 py-12">
+          <p className="text-center text-sm text-slate-600 py-12">
             No calls recorded yet.
           </p>
         )}
