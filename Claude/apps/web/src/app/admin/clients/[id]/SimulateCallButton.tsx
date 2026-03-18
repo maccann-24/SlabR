@@ -8,27 +8,27 @@ export default function SimulateCallButton({
   clientId: string;
 }) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   async function handleSimulate() {
     setLoading(true);
-    setResult(null);
+    setStatusMessage(null);
     try {
       const res = await fetch("/api/simulate-call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clientId }),
       });
-      const data = await res.json();
+      const simulationResult = await res.json();
       if (res.ok) {
-        setResult(
-          `Created call, lead, and appointment. Revenue rescued: $${data.revenueRescued}`
+        setStatusMessage(
+          `Created call, lead, and appointment. Revenue rescued: $${simulationResult.revenueRescued}`
         );
       } else {
-        setResult(`Error: ${data.error}`);
+        setStatusMessage(`Error: ${simulationResult.error}`);
       }
     } catch {
-      setResult("Network error");
+      setStatusMessage("Network error");
     } finally {
       setLoading(false);
     }
@@ -43,8 +43,8 @@ export default function SimulateCallButton({
       >
         {loading ? "Simulating..." : "Simulate Call"}
       </button>
-      {result && (
-        <p className="text-xs text-gray-600 max-w-xs text-right">{result}</p>
+      {statusMessage && (
+        <p className="text-xs text-gray-600 max-w-xs text-right">{statusMessage}</p>
       )}
     </div>
   );

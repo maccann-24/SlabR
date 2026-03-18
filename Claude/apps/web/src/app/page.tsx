@@ -90,18 +90,18 @@ function Calculator() {
 /*  LEAD CAPTURE FORM                               */
 /* ─────────────────────────────────────────────── */
 function PilotForm() {
-  const [data, setData] = useState({ businessName: "", ownerName: "", phone: "", industry: "" });
+  const [formValues, setFormValues] = useState({ businessName: "", ownerName: "", phone: "", industry: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!data.businessName || !data.phone) return;
+    if (!formValues.businessName || !formValues.phone) return;
     setStatus("submitting");
     try {
       const res = await fetch("/api/pilot-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formValues),
       });
       setStatus(res.ok ? "success" : "error");
     } catch {
@@ -136,9 +136,9 @@ function PilotForm() {
           { k: "electrical", i: "⚡", l: "Electrical" },
         ].map((ind) => (
           <button key={ind.k} type="button"
-            onClick={() => setData({ ...data, industry: ind.k })}
+            onClick={() => setFormValues({ ...formValues, industry: ind.k })}
             className={`flex items-center gap-1.5 rounded-md border px-2.5 py-2 text-xs font-medium transition-all ${
-              data.industry === ind.k
+              formValues.industry === ind.k
                 ? "border-amber-500/50 bg-amber-500/10 text-white scale-[1.02]"
                 : "border-white/5 bg-white/[0.02] text-slate-500 hover:border-white/10 hover:text-slate-300"
             }`}
@@ -148,14 +148,14 @@ function PilotForm() {
         ))}
       </div>
 
-      <Input placeholder="Business name" value={data.businessName}
-        onChange={(e) => setData({ ...data, businessName: e.target.value })}
+      <Input placeholder="Business name" value={formValues.businessName}
+        onChange={(e) => setFormValues({ ...formValues, businessName: e.target.value })}
         className="bg-white/[0.03] border-white/5 h-10 text-sm placeholder:text-slate-600 focus:border-amber-500/30" required />
-      <Input placeholder="Your name" value={data.ownerName}
-        onChange={(e) => setData({ ...data, ownerName: e.target.value })}
+      <Input placeholder="Your name" value={formValues.ownerName}
+        onChange={(e) => setFormValues({ ...formValues, ownerName: e.target.value })}
         className="bg-white/[0.03] border-white/5 h-10 text-sm placeholder:text-slate-600 focus:border-amber-500/30" />
-      <Input placeholder="Phone number" type="tel" value={data.phone}
-        onChange={(e) => setData({ ...data, phone: e.target.value })}
+      <Input placeholder="Phone number" type="tel" value={formValues.phone}
+        onChange={(e) => setFormValues({ ...formValues, phone: e.target.value })}
         className="bg-white/[0.03] border-white/5 h-10 text-sm placeholder:text-slate-600 focus:border-amber-500/30" required />
 
       <Button type="submit" disabled={status === "submitting"}
