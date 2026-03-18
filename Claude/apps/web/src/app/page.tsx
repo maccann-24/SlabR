@@ -150,7 +150,7 @@ export default function Home() {
           <div>
             <Badge variant="outline" className="border-amber-500/30 text-amber-500 bg-amber-500/5 mb-6 gap-1.5 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-              Now answering calls for 50+ contractors
+              Built in Virginia · Answering calls for 50+ US contractors
             </Badge>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
@@ -161,7 +161,7 @@ export default function Home() {
             <p className="mt-5 text-lg text-muted-foreground leading-relaxed max-w-lg">
               Like your best CSR — but never calls in sick, never misses a call,
               and works nights, weekends, and holidays. Books jobs directly
-              into your calendar.
+              into your calendar. Built and supported by a US-based team.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -178,7 +178,7 @@ export default function Home() {
             </div>
 
             {/* Trust anchors */}
-            <div className="mt-10 flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                 14-day free pilot
@@ -189,7 +189,11 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
-                15-min setup
+                US-based support
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
+                Your data stays in the US
               </div>
             </div>
           </div>
@@ -336,6 +340,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Trust Strip ── */}
+      <section className="border-y border-border/40 bg-card/30">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🇺🇸</span>
+            Built in Virginia
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-base">👥</span>
+            US-based support team
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-base">🔒</span>
+            Data hosted in the US
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-base">⚡</span>
+            15-minute setup
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-base">📞</span>
+            Real humans when you need them
+          </div>
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <section className="border-y border-border/40 bg-card/20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-24">
@@ -423,6 +453,7 @@ export default function Home() {
             { q: "Do I need special equipment?", a: "No. You forward your existing business number to the AI number (takes 30 seconds), or use the AI number directly. Works with any phone." },
             { q: "Can I try it before I pay?", a: "Yes. 14-day pilot with full Pro features, no credit card required. Plus a $1,000 Revenue Rescued Guarantee — if we don't rescue at least $1K in your first paid month, that month is free." },
             { q: "What about my existing answering service?", a: "Replace it. Your AI receptionist costs less, answers faster, books directly into your calendar, and never puts callers on hold. Your current answering service takes messages — we take action." },
+            { q: "Where is your team based?", a: "Virginia. US-based team, US-hosted data. When you call us, you talk to a real person in the same time zone — not a call center overseas." },
           ].map((item) => (
             <AccordionItem key={item.q} value={item.q} className="border border-border/50 rounded-lg px-4 data-[state=open]:border-amber-500/20">
               <AccordionTrigger className="text-sm font-medium hover:no-underline py-4">{item.q}</AccordionTrigger>
@@ -439,7 +470,7 @@ export default function Home() {
             Every missed call costs you <span className="text-amber-500 font-mono">$350</span>.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-lg mx-auto">
-            How many did you miss today?
+            How many did you miss today? Built in Virginia. Backed by a real team.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold h-12 px-8 shadow-lg shadow-amber-500/20">
@@ -452,8 +483,8 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="border-t border-border/40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">Built for plumbers. By people who answer phones.</span>
-          <span className="text-sm text-muted-foreground">© 2026 ServiceLine AI</span>
+          <span className="text-sm text-muted-foreground">Built for American contractors. From Virginia with grit.</span>
+          <span className="text-sm text-muted-foreground">© 2026 ServiceLine AI · Virginia, USA</span>
         </div>
       </footer>
 
