@@ -6,6 +6,7 @@ final class AppState: ObservableObject {
     @Published var showPSAImport = false
     @Published var showCamera = false
     @Published var pendingEntryPoint: EntryPoint?
+    @Published var hasCompletedOnboarding: Bool = true
 
     enum EntryPoint {
         case psaImport
@@ -27,12 +28,23 @@ final class AppState: ObservableObject {
     init() {
         if let existing = KeychainHelper.read(key: KeychainKey.userId) {
             self.userId = existing
+            // Existing users skip onboarding
+            if KeychainHelper.read(key: KeychainKey.onboardingCompleted) == nil {
+                KeychainHelper.save(key: KeychainKey.onboardingCompleted, value: "true")
+            }
+            self.hasCompletedOnboarding = true
         } else {
             let newId = UUID().uuidString
             KeychainHelper.save(key: KeychainKey.userId, value: newId)
             KeychainHelper.save(key: KeychainKey.trialStartDate, value: AccessControl.iso8601Formatter.string(from: Date()))
             self.userId = newId
+            self.hasCompletedOnboarding = false
         }
+    }
+
+    func completeOnboarding() {
+        KeychainHelper.save(key: KeychainKey.onboardingCompleted, value: "true")
+        hasCompletedOnboarding = true
     }
 }
 
@@ -45,6 +57,7 @@ enum KeychainKey {
     static let psaToken = "psaToken"
     static let psaTokenExpiry = "psaTokenExpiry"
     static let trialStartDate = "trialStartDate"
+    static let onboardingCompleted = "onboardingCompleted"
 }
 
 enum KeychainHelper {

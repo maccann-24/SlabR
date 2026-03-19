@@ -4,6 +4,16 @@ struct RootView: View {
     @StateObject private var appState = AppState()
 
     var body: some View {
+        if appState.hasCompletedOnboarding {
+            mainContent
+        } else {
+            OnboardingView()
+                .environmentObject(appState)
+                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+        }
+    }
+
+    private var mainContent: some View {
         VStack(spacing: 0) {
             // Tab content — ZStack keeps all tabs alive to preserve navigation/scroll state
             ZStack {

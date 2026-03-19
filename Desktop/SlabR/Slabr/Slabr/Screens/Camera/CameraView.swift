@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct CameraView: View {
+    var onDismissWithRecord: ((ListingRecord?) -> Void)?
+
     @EnvironmentObject private var appState: AppState
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -65,7 +67,10 @@ struct CameraView: View {
 
     private var topBar: some View {
         HStack {
-            Button { dismiss() } label: {
+            Button {
+                onDismissWithRecord?(viewModel.savedRecord)
+                dismiss()
+            } label: {
                 Image(systemName: "xmark")
                     .font(.title3.weight(.semibold))
                     .foregroundColor(.white)
@@ -312,10 +317,20 @@ struct CameraView: View {
 
         case .saved:
             VStack(spacing: Spacing.sm) {
-                PrimaryButton("Continue to listing") { showListingBuilder = true }
-                Button("Done") { dismiss() }
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
+                PrimaryButton("Continue to listing") {
+                    if let callback = onDismissWithRecord {
+                        callback(viewModel.savedRecord)
+                        dismiss()
+                    } else {
+                        showListingBuilder = true
+                    }
+                }
+                Button("Done") {
+                    onDismissWithRecord?(viewModel.savedRecord)
+                    dismiss()
+                }
+                .font(.cardMeta)
+                .foregroundColor(.white.opacity(0.7))
             }
         }
     }

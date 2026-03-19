@@ -4,7 +4,7 @@ import CoreData
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.managedObjectContext) private var context
-    @State private var sellerMode: SellerMode = .standard
+    @State private var sellerMode: SellerMode = .regular
     @State private var blockedFeature: AccessControl.Feature?
 
     var body: some View {
@@ -141,7 +141,7 @@ struct SettingsView: View {
             HStack(spacing: Spacing.sm) {
                 ForEach(SellerMode.allCases, id: \.rawValue) { mode in
                     FilterChip(title: mode.displayName, isSelected: sellerMode == mode) {
-                        if mode == .speed && !AccessControl.hasAccess(userId: appState.userId, feature: .speedMode) {
+                        if mode == .highVolume && !AccessControl.hasAccess(userId: appState.userId, feature: .speedMode) {
                             blockedFeature = .speedMode
                         } else {
                             sellerMode = mode
@@ -162,7 +162,7 @@ struct SettingsView: View {
         request.fetchLimit = 1
         do {
             if let entity = try context.fetch(request).first {
-                sellerMode = SellerMode(rawValue: entity.sellerMode ?? "standard") ?? .standard
+                sellerMode = SellerMode(legacyValue: entity.sellerMode ?? "regular")
             }
         } catch {
             Log.settings.error("Failed to load seller mode: \(error)")
