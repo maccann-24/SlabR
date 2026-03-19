@@ -1,3 +1,4 @@
+import Foundation
 import os
 
 /// Centralized loggers scoped by subsystem + category.
