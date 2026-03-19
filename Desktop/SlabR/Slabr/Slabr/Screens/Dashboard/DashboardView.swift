@@ -60,7 +60,7 @@ struct DashboardView: View {
             StatCard(
                 value: "\(viewModel.draftCount)",
                 label: "Drafts",
-                tileColor: .tilePricing
+                tileColor: .tileCamera
             )
             StatCard(
                 value: "\(viewModel.activeCount)",

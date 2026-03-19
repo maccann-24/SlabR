@@ -108,31 +108,14 @@ struct AnalyticsView: View {
     private var sourceChart: some View {
         ChartCard(title: "Import Source") {
             Chart(viewModel.sourceBreakdown) { item in
-                SectorMark(
-                    angle: .value("Count", item.count),
-                    innerRadius: .ratio(0.5)
+                BarMark(
+                    x: .value("Count", item.count),
+                    y: .value("Source", item.label)
                 )
                 .foregroundStyle(item.label == "PSA Import" ? Color.tilePSA : Color.tileCamera)
-                .annotation(position: .overlay) {
-                    Text("\(item.count)")
-                        .font(.caption)
-                        .foregroundColor(.labelPrimary)
-                }
+                .cornerRadius(4)
             }
-            .frame(height: 180)
-
-            HStack(spacing: Spacing.lg) {
-                ForEach(viewModel.sourceBreakdown) { item in
-                    HStack(spacing: Spacing.xs) {
-                        Circle()
-                            .fill(item.label == "PSA Import" ? Color.tilePSA : Color.tileCamera)
-                            .frame(width: 8, height: 8)
-                        Text(item.label)
-                            .font(.caption)
-                            .foregroundColor(.labelSecondary)
-                    }
-                }
-            }
+            .frame(height: CGFloat(max(viewModel.sourceBreakdown.count, 1)) * 36)
         }
     }
 
@@ -141,31 +124,14 @@ struct AnalyticsView: View {
     private var statusChart: some View {
         ChartCard(title: "Listing Status") {
             Chart(viewModel.statusBreakdown) { item in
-                SectorMark(
-                    angle: .value("Count", item.count),
-                    innerRadius: .ratio(0.5)
+                BarMark(
+                    x: .value("Count", item.count),
+                    y: .value("Status", item.label)
                 )
                 .foregroundStyle(item.label == "Active" ? Color.brandAccent : Color.neutral)
-                .annotation(position: .overlay) {
-                    Text("\(item.count)")
-                        .font(.caption)
-                        .foregroundColor(.labelPrimary)
-                }
+                .cornerRadius(4)
             }
-            .frame(height: 180)
-
-            HStack(spacing: Spacing.lg) {
-                ForEach(viewModel.statusBreakdown) { item in
-                    HStack(spacing: Spacing.xs) {
-                        Circle()
-                            .fill(item.label == "Active" ? Color.brandAccent : Color.neutral)
-                            .frame(width: 8, height: 8)
-                        Text(item.label)
-                            .font(.caption)
-                            .foregroundColor(.labelSecondary)
-                    }
-                }
-            }
+            .frame(height: CGFloat(max(viewModel.statusBreakdown.count, 1)) * 36)
         }
     }
 

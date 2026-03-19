@@ -82,7 +82,11 @@ final class CameraService: NSObject, CameraServiceProtocol {
 
         // Portrait orientation
         if let connection = videoOutput.connection(with: .video) {
-            connection.videoRotationAngle = 90
+            if #available(iOS 17.0, *) {
+                connection.videoRotationAngle = 90
+            } else {
+                connection.videoOrientation = .portrait
+            }
         }
 
         session.commitConfiguration()
