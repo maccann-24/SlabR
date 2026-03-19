@@ -18,9 +18,12 @@ struct ListingsView: View {
                     EmptyState(
                         icon: "list.bullet.rectangle",
                         title: "No listings yet",
-                        message: "Your active and draft listings will appear here."
+                        message: "Your active and draft listings will appear here.",
+                        ctaTitle: "Import a card",
+                        ctaAction: { appState.showEntryPointSheet = true }
                     )
                     .frame(maxWidth: .infinity)
+                    .padding(.horizontal, Spacing.screenMargin)
                 } else {
                     VStack(spacing: Spacing.cardGap) {
                         if !viewModel.drafts.isEmpty {

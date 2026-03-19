@@ -6,6 +6,7 @@ struct CameraView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = CameraViewModel()
     @State private var showListingBuilder = false
+    @State private var scanLineOffset: CGFloat = 8
 
     var body: some View {
         ZStack {
@@ -41,6 +42,9 @@ struct CameraView: View {
         .onAppear {
             viewModel.configure(context: context, userId: appState.userId)
             viewModel.startCamera()
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                scanLineOffset = 92
+            }
         }
         .onDisappear {
             viewModel.stopCamera()
@@ -80,9 +84,9 @@ struct CameraView: View {
 
     private var scanningOverlay: some View {
         GeometryReader { geo in
-            let frameWidth: CGFloat = 280
-            let frameHeight: CGFloat = 80
-            let frameY = (geo.size.height - frameHeight) / 2 - 40
+            let frameWidth: CGFloat = 300
+            let frameHeight: CGFloat = 100
+            let frameY = geo.size.height * 0.55
 
             ZStack {
                 Color.black.opacity(0.4)
@@ -90,7 +94,7 @@ struct CameraView: View {
 
                 RoundedRectangle(cornerRadius: 12)
                     .frame(width: frameWidth, height: frameHeight)
-                    .position(x: geo.size.width / 2, y: frameY + frameHeight / 2)
+                    .position(x: geo.size.width / 2, y: frameY)
                     .blendMode(.destinationOut)
             }
             .compositingGroup()
@@ -98,12 +102,18 @@ struct CameraView: View {
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(Color.brandAccent.opacity(0.6), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
                 .frame(width: frameWidth, height: frameHeight)
-                .position(x: geo.size.width / 2, y: frameY + frameHeight / 2)
+                .position(x: geo.size.width / 2, y: frameY)
+
+            // Scanning line animation
+            Rectangle()
+                .fill(Color.brandAccent.opacity(0.3))
+                .frame(width: frameWidth - 16, height: 2)
+                .position(x: geo.size.width / 2, y: frameY - frameHeight / 2 + scanLineOffset)
 
             Text("Position slab label in frame")
                 .font(.cardMeta)
                 .foregroundColor(.white.opacity(0.8))
-                .position(x: geo.size.width / 2, y: frameY + frameHeight + 30)
+                .position(x: geo.size.width / 2, y: frameY + frameHeight / 2 + 24)
         }
     }
 

@@ -21,9 +21,12 @@ struct AnalyticsView: View {
                     EmptyState(
                         icon: "chart.bar.fill",
                         title: "No data yet",
-                        message: "Import cards to see analytics."
+                        message: "Import cards to see analytics.",
+                        ctaTitle: "Import cards",
+                        ctaAction: { appState.showEntryPointSheet = true }
                     )
                     .frame(maxWidth: .infinity)
+                    .padding(.horizontal, Spacing.screenMargin)
                 } else {
                     VStack(spacing: Spacing.cardGap) {
                         gradeDistributionChart

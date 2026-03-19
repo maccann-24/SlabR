@@ -19,11 +19,8 @@ struct AddFAB: View {
                 .clipShape(Circle())
                 .shadow(color: Color.brandAccent.opacity(0.4), radius: 8, x: 0, y: 4)
         }
-        .scaleEffect(isPressed ? 0.93 : 1.0)
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6),
-            value: isPressed
-        )
+        .scaleEffect(isPressed ? Motion.fabPress : 1.0)
+        .animation(Motion.buttonPress(reduceMotion: reduceMotion), value: isPressed)
         .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})

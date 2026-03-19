@@ -132,6 +132,9 @@ struct EntryPointButton: View {
     let tileColor: Color
     let action: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPressed = false
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
@@ -160,5 +163,12 @@ struct EntryPointButton: View {
             .background(Color.cardSurface)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
+        .scaleEffect(isPressed ? Motion.tilePress : 1.0)
+        .animation(Motion.buttonPress(reduceMotion: reduceMotion), value: isPressed)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in isPressed = true }
+                .onEnded { _ in isPressed = false }
+        )
     }
 }

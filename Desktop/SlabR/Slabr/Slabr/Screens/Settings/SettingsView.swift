@@ -58,23 +58,31 @@ struct SettingsView: View {
     @ViewBuilder
     private var trialStatusRow: some View {
         let daysLeft = AccessControl.trialDaysRemaining()
+        let trialColor: Color = daysLeft <= 1 ? .negative : daysLeft <= 3 ? .warning : .brandAccent
         if AccessControl.isTrialActive() {
-            HStack(spacing: Spacing.md) {
-                Image(systemName: "gift.fill")
-                    .foregroundColor(.brandAccent)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Free Trial")
-                        .font(.cardTitle)
-                        .foregroundColor(.labelPrimary)
-                    Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") remaining")
-                        .font(.cardMeta)
-                        .foregroundColor(.brandAccent)
+            HStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(trialColor)
+                    .frame(width: 3)
+                    .padding(.vertical, Spacing.sm)
+
+                HStack(spacing: Spacing.md) {
+                    Image(systemName: "gift.fill")
+                        .foregroundColor(trialColor)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("Free Trial")
+                            .font(.cardTitle)
+                            .foregroundColor(.labelPrimary)
+                        Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") remaining")
+                            .font(.cardMeta)
+                            .foregroundColor(trialColor)
+                    }
+                    Spacer()
                 }
-                Spacer()
+                .padding(Spacing.cardPadding)
             }
-            .padding(Spacing.cardPadding)
-            .background(Color.cardSurface)
+            .background(Color.brandAccentFaint)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else if AccessControl.currentTier(userId: appState.userId) == .free {
             HStack(spacing: Spacing.md) {

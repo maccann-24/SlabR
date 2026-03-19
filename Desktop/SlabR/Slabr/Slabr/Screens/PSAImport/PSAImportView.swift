@@ -147,20 +147,26 @@ struct PSAImportView: View {
 
     private var credentialForm: some View {
         VStack(spacing: Spacing.md) {
-            Text("Sign in with your PSA account to look up cert data. Credentials are stored securely on this device.")
+            Text("Sign in to look up cert data. Credentials stored on-device.")
                 .font(.cardMeta)
                 .foregroundColor(.labelSecondary)
                 .multilineTextAlignment(.center)
+                .lineLimit(nil)
 
-            TextField("Username", text: $viewModel.username)
-                .textContentType(.username)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .textFieldStyle(.roundedBorder)
+            SlabRTextField(
+                placeholder: "Username",
+                text: $viewModel.username,
+                contentType: .username,
+                autocapitalization: .never,
+                disableAutocorrection: true
+            )
 
-            SecureField("Password", text: $viewModel.password)
-                .textContentType(.password)
-                .textFieldStyle(.roundedBorder)
+            SlabRTextField(
+                placeholder: "Password",
+                text: $viewModel.password,
+                isSecure: true,
+                contentType: .password
+            )
 
             PrimaryButton("Sign in") { viewModel.signIn() }
         }

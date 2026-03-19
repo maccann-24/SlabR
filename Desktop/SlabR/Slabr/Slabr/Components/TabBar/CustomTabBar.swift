@@ -40,6 +40,7 @@ struct CustomTabBar: View {
             }
             .foregroundColor(selectedTab == tab ? .white : .neutral)
             .frame(maxWidth: .infinity)
+            .animation(Motion.tabSwitch(reduceMotion: reduceMotion), value: selectedTab)
         }
         .accessibilityLabel(label)
     }

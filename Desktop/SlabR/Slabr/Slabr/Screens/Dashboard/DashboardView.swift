@@ -13,18 +13,26 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                Text("Dashboard")
-                    .font(.sectionHeader)
-                    .foregroundColor(.labelPrimary)
-                    .padding(.horizontal, Spacing.screenMargin)
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(greeting)
+                        .font(.caption)
+                        .foregroundColor(.labelSecondary)
+                    Text("Dashboard")
+                        .font(.sectionHeader)
+                        .foregroundColor(.labelPrimary)
+                }
+                .padding(.horizontal, Spacing.screenMargin)
 
                 if viewModel.totalCards == 0 {
                     EmptyState(
                         icon: "chart.line.uptrend.xyaxis",
                         title: "No cards yet",
-                        message: "Scan a slab to build your inventory."
+                        message: "Scan a slab to build your inventory.",
+                        ctaTitle: "Scan your first slab",
+                        ctaAction: { appState.showEntryPointSheet = true }
                     )
                     .frame(maxWidth: .infinity)
+                    .padding(.horizontal, Spacing.screenMargin)
                 } else {
                     VStack(spacing: Spacing.lg) {
                         statGrid
@@ -121,5 +129,16 @@ struct DashboardView: View {
         .padding(Spacing.cardPadding)
         .background(Color.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - Greeting
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        default: return "Good evening"
+        }
     }
 }
