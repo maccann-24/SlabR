@@ -62,9 +62,11 @@ final class AccessControl {
 
     enum Feature: String, Identifiable {
         var id: String { rawValue }
-        case psaImport
         case cameraCapture
+        case psaImport
         case directEbayPublish
+        case conditionGuide
+        case rawCardAIIdentification
         case speedMode
         case batchMode
         case templates
@@ -74,9 +76,11 @@ final class AccessControl {
 
         var requiredTier: SubscriptionTier {
             switch self {
-            case .psaImport, .cameraCapture, .directEbayPublish:
+            case .cameraCapture:
+                return .free
+            case .psaImport, .directEbayPublish, .conditionGuide:
                 return .starter
-            case .speedMode, .batchMode, .templates:
+            case .rawCardAIIdentification, .speedMode, .batchMode, .templates:
                 return .seller
             case .pricingSuggestion:
                 return .pro
@@ -87,9 +91,11 @@ final class AccessControl {
 
         var displayName: String {
             switch self {
-            case .psaImport: return "PSA Scan Import"
             case .cameraCapture: return "Camera Scanning"
+            case .psaImport: return "PSA Scan Import"
             case .directEbayPublish: return "eBay Publishing"
+            case .conditionGuide: return "Condition Guide"
+            case .rawCardAIIdentification: return "AI Card Identification"
             case .speedMode: return "Speed Mode"
             case .batchMode: return "Batch Import"
             case .templates: return "Listing Templates"

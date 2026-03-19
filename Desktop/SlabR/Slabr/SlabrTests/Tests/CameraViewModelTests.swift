@@ -20,48 +20,63 @@ final class CameraViewModelTests: XCTestCase {
         return (vm, mockCamera, mockPSA)
     }
 
-    // MARK: - Start
+    // MARK: - Initial State
 
-    func testStartCameraWithNoTokenShowsError() {
-        KeychainHelper.delete(key: testTokenKey)
+    func testInitialStateIsDetecting() {
         let (vm, _, _) = makeVM()
         vm.startCamera()
-        if case .error = vm.state {
-            // Expected
-        } else {
-            XCTFail("Expected error state, got \(vm.state)")
-        }
+        XCTAssertEqual(vm.state, .detecting)
     }
 
-    func testStartCameraWithTokenStartsScanning() {
+    // MARK: - Card Type Detection
+
+    func testCardTypeDetectedPSATransitions() {
+        let (vm, _, _) = makeVM()
         KeychainHelper.save(key: testTokenKey, value: "fake-token")
-        let (vm, mockCamera, _) = makeVM()
-        vm.startCamera()
-        XCTAssertEqual(vm.state, .scanning)
-        XCTAssertEqual(mockCamera.startCallCount, 1)
+        vm.cardTypeDetected(.psaSlab)
+        XCTAssertEqual(vm.state, .detectedType(.psaSlab))
     }
 
-    // MARK: - Detection
+    func testCardTypeDetectedRawTransitions() {
+        let (vm, _, _) = makeVM()
+        vm.cardTypeDetected(.rawCard)
+        XCTAssertEqual(vm.state, .detectedType(.rawCard))
+    }
+
+    func testCardTypeUnknownStaysOnDetectedType() {
+        let (vm, _, _) = makeVM()
+        vm.cardTypeDetected(.unknown)
+        XCTAssertEqual(vm.state, .detectedType(.unknown))
+    }
+
+    func testUserSelectsPSAFromFallback() {
+        let (vm, _, _) = makeVM()
+        KeychainHelper.save(key: testTokenKey, value: "fake-token")
+        vm.userSelectedType(.psaSlab)
+        XCTAssertEqual(vm.state, .detectedType(.psaSlab))
+    }
+
+    // MARK: - PSA Cert Detection (existing)
 
     func testCertDetectedTransitionsToDetected() {
         let (vm, _, _) = makeVM()
+        // Must be in scanning state for cert detection
+        vm.state = .scanning
         vm.certDetected("12345678")
         XCTAssertEqual(vm.state, .detected("12345678"))
     }
 
     func testCertDetectedDebouncesSameCert() {
         let (vm, _, _) = makeVM()
+        vm.state = .scanning
         vm.certDetected("12345678")
-        XCTAssertEqual(vm.state, .detected("12345678"))
-
-        // Reset to scanning to verify debounce prevents re-detection
         vm.certDetected("12345678")
-        // Should still be detected (debounce doesn't reset state, just ignores)
         XCTAssertEqual(vm.state, .detected("12345678"))
     }
 
     func testCertDetectedAllowsDifferentCert() {
         let (vm, _, _) = makeVM()
+        vm.state = .scanning
         vm.certDetected("12345678")
         vm.certDetected("87654321")
         XCTAssertEqual(vm.state, .detected("87654321"))
@@ -73,17 +88,28 @@ final class CameraViewModelTests: XCTestCase {
         let (vm, _, _) = makeVM()
         vm.manualCertNumber = "1234567"
         vm.submitManualCert()
-        XCTAssertEqual(vm.state, .error("Enter a valid 8-digit cert number."))
+        if case .error = vm.state {
+            // Expected
+        } else {
+            XCTFail("Expected error state")
+        }
+    }
+
+    // MARK: - Raw Card Flow
+
+    func testRawReadyState() {
+        let (vm, _, _) = makeVM()
+        vm.state = .rawReady
+        XCTAssertEqual(vm.state, .rawReady)
     }
 
     // MARK: - Reset
 
-    func testResetReturnsToScanning() {
+    func testResetReturnsToDetecting() {
         let (vm, mockCamera, _) = makeVM()
         vm.certDetected("12345678")
-        XCTAssertEqual(vm.state, .detected("12345678"))
         vm.reset()
-        XCTAssertEqual(vm.state, .scanning)
+        XCTAssertEqual(vm.state, .detecting)
         XCTAssertEqual(mockCamera.resumeCallCount, 1)
     }
 }

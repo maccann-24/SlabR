@@ -1,22 +1,27 @@
 import AVFoundation
 import CoreImage
 import os
+import UIKit
 import Vision
 
 /// Protocol for camera hardware abstraction. Enables mock injection for ViewModel testing.
 protocol CameraServiceProtocol: AnyObject {
     var onCertDetected: ((String) -> Void)? { get set }
+    var onCardTypeDetected: ((CardScanType) -> Void)? { get set }
     func startSession()
     func stopSession()
     func resumeDetection()
     func toggleTorch()
+    func capturePhoto() async -> UIImage?
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer
 }
 
 /// AVCaptureSession wrapper that delivers camera frames, runs VisionService OCR
 /// throttled to ~2fps, and calls back when an 8-digit cert number is detected.
+/// Also performs card type detection (PSA slab vs raw card) via color heuristic.
 final class CameraService: NSObject, CameraServiceProtocol {
     var onCertDetected: ((String) -> Void)?
+    var onCardTypeDetected: ((CardScanType) -> Void)?
 
     private let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
@@ -28,8 +33,15 @@ final class CameraService: NSObject, CameraServiceProtocol {
     private let isDetectionPaused = OSAllocatedUnfairLock(initialState: false)
     private var currentOCRTask: Task<Void, Never>?
     private var device: AVCaptureDevice?
+    private let detectionService: CardDetectionServiceProtocol
+    private let photoOutput = AVCapturePhotoOutput()
+    private var photoContinuation: CheckedContinuation<UIImage?, Never>?
+    private var cardTypeVotes: [CardScanType: Int] = [:]
+    private var cardTypeResolved = false
+    private var detectionFrameCount = 0
 
-    override init() {
+    init(detectionService: CardDetectionServiceProtocol = CardDetectionService()) {
+        self.detectionService = detectionService
         super.init()
         configureSession()
     }
@@ -80,6 +92,11 @@ final class CameraService: NSObject, CameraServiceProtocol {
             session.addOutput(videoOutput)
         }
 
+        // Photo output for raw card capture
+        if session.canAddOutput(photoOutput) {
+            session.addOutput(photoOutput)
+        }
+
         // Portrait orientation
         if let connection = videoOutput.connection(with: .video) {
             if #available(iOS 17.0, *) {
@@ -110,6 +127,17 @@ final class CameraService: NSObject, CameraServiceProtocol {
 
     func resumeDetection() {
         isDetectionPaused.withLock { $0 = false }
+        cardTypeResolved = false
+        cardTypeVotes = [:]
+        detectionFrameCount = 0
+    }
+
+    func capturePhoto() async -> UIImage? {
+        await withCheckedContinuation { continuation in
+            self.photoContinuation = continuation
+            let settings = AVCapturePhotoSettings()
+            self.photoOutput.capturePhoto(with: settings, delegate: self)
+        }
     }
 
     func toggleTorch() {
@@ -147,7 +175,30 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
 
-        // Run OCR — one task at a time, cancelled on next frame if still running
+        // Phase 1: Card type detection (first ~10 frames)
+        if !cardTypeResolved {
+            detectionFrameCount += 1
+            let vote = detectionService.detectCardType(from: cgImage)
+            cardTypeVotes[vote, default: 0] += 1
+
+            // After 10 frames (~5s at 2fps), resolve by majority vote
+            if detectionFrameCount >= 10 {
+                let resolved = cardTypeVotes.max(by: { $0.value < $1.value })?.key ?? .unknown
+                cardTypeResolved = true
+                DispatchQueue.main.async { [weak self] in
+                    self?.onCardTypeDetected?(resolved)
+                }
+            } else if let (type, count) = cardTypeVotes.max(by: { $0.value < $1.value }), count >= 5 {
+                // Early resolution if 5+ consistent votes
+                cardTypeResolved = true
+                DispatchQueue.main.async { [weak self] in
+                    self?.onCardTypeDetected?(type)
+                }
+            }
+            return // Skip OCR during detection phase
+        }
+
+        // Phase 2: OCR (only runs after card type resolved, for PSA slab flow)
         currentOCRTask = Task { [weak self] in
             defer { self?.currentOCRTask = nil }
             do {
@@ -161,5 +212,26 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
                 Log.camera.error("Frame OCR failed: \(error)")
             }
         }
+    }
+}
+
+// MARK: - Photo Capture
+
+extension CameraService: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error {
+            Log.camera.error("Photo capture failed: \(error)")
+            photoContinuation?.resume(returning: nil)
+            photoContinuation = nil
+            return
+        }
+        guard let data = photo.fileDataRepresentation(),
+              let image = UIImage(data: data) else {
+            photoContinuation?.resume(returning: nil)
+            photoContinuation = nil
+            return
+        }
+        photoContinuation?.resume(returning: image)
+        photoContinuation = nil
     }
 }

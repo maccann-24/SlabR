@@ -3,6 +3,7 @@ import AVFoundation
 
 final class MockCameraService: CameraServiceProtocol {
     var onCertDetected: ((String) -> Void)?
+    var onCardTypeDetected: ((CardScanType) -> Void)?
     var startCallCount = 0
     var stopCallCount = 0
     var resumeCallCount = 0
@@ -21,12 +22,21 @@ final class MockCameraService: CameraServiceProtocol {
 
     func toggleTorch() {}
 
+    func capturePhoto() async -> UIImage? {
+        nil
+    }
+
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer {
         AVCaptureVideoPreviewLayer()
     }
 
-    /// Simulates a cert detection for testing.
+    // MARK: - Test Helpers
+
     func simulateDetection(_ cert: String) {
         onCertDetected?(cert)
+    }
+
+    func simulateCardTypeDetection(_ type: CardScanType) {
+        onCardTypeDetected?(type)
     }
 }

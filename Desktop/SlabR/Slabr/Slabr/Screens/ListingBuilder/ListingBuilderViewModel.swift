@@ -31,16 +31,25 @@ final class ListingBuilderViewModel: ObservableObject {
     let certNumber: String?
     let isRookie: Bool
     let thumbnailImage: UIImage?
+    @Published var condition: CardCondition?
 
     private let listing: ListingRecord
     private let ebayService: EbayServiceProtocol
     private var context: NSManagedObjectContext { listing.managedObjectContext! }
     var recordUserId: String { listing.userId ?? "" }
 
+    /// True if this is a raw (ungraded) card — shows condition selector, hides PSA fields.
+    var isRawCard: Bool {
+        let hasGrade = !(listing.card?.grade ?? "").isEmpty
+        return !hasGrade && listing.card?.entryMethod == "camera_raw"
+    }
+
     private static let maxPrice = Decimal(string: "99999.99")!
 
     var canPublish: Bool {
-        validatePrice() == nil && !title.isEmpty && title.count <= 80
+        let baseValid = validatePrice() == nil && !title.isEmpty && title.count <= 80
+        if isRawCard { return baseValid && condition != nil }
+        return baseValid
     }
 
     /// Validates `priceText` against business rules: must be non-empty, numeric,
@@ -165,5 +174,8 @@ final class ListingBuilderViewModel: ObservableObject {
         } else {
             listing.minimumOfferAmount = nil
         }
+
+        // Save condition for raw cards
+        listing.card?.condition = condition?.rawValue
     }
 }

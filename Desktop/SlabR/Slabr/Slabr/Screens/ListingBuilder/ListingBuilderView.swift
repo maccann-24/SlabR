@@ -6,6 +6,7 @@ struct ListingBuilderView: View {
     @StateObject private var viewModel: ListingBuilderViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showUpgradeSheet = false
+    @State private var showConditionGuide = false
 
     init(listing: ListingRecord) {
         _viewModel = StateObject(wrappedValue: ListingBuilderViewModel(listing: listing))
@@ -53,6 +54,10 @@ struct ListingBuilderView: View {
                     titleSection
                     priceSection
                     formatSection
+
+                    if viewModel.isRawCard {
+                        conditionSection
+                    }
 
                     if viewModel.format != .auction {
                         bestOfferSection
@@ -132,6 +137,25 @@ struct ListingBuilderView: View {
                         .foregroundColor(.negative)
                 }
             }
+        }
+    }
+
+    // MARK: - Condition (Raw Cards Only)
+
+    private var conditionSection: some View {
+        CardSection(title: "") {
+            ConditionSelector(
+                selectedCondition: $viewModel.condition,
+                showGuideButton: AccessControl.hasAccess(
+                    userId: viewModel.recordUserId,
+                    feature: .conditionGuide
+                ),
+                onGuideRequested: { showConditionGuide = true }
+            )
+        }
+        .sheet(isPresented: $showConditionGuide) {
+            ConditionGuideSheet()
+                .presentationDetents([.large])
         }
     }
 

@@ -85,8 +85,18 @@ struct EntryPointSheet: View {
 
             VStack(spacing: Spacing.cardGap) {
                 EntryPointButton(
-                    title: "Import PSA Scan",
-                    subtitle: "Select scan from camera roll",
+                    title: "Scan Card",
+                    subtitle: "PSA slabs and raw cards",
+                    icon: "camera.fill",
+                    tileColor: .tileCamera
+                ) {
+                    appState.pendingEntryPoint = .camera
+                    dismiss()
+                }
+
+                EntryPointButton(
+                    title: "Import from Camera Roll",
+                    subtitle: "Select PSA scan from photos",
                     icon: "photo.on.rectangle",
                     tileColor: .tilePSA
                 ) {
@@ -95,20 +105,6 @@ struct EntryPointSheet: View {
                         dismiss()
                     } else {
                         blockedFeature = .psaImport
-                    }
-                }
-
-                EntryPointButton(
-                    title: "Scan Raw Card",
-                    subtitle: "Use camera to identify card",
-                    icon: "camera.fill",
-                    tileColor: .tileCamera
-                ) {
-                    if AccessControl.hasAccess(userId: appState.userId, feature: .cameraCapture) {
-                        appState.pendingEntryPoint = .camera
-                        dismiss()
-                    } else {
-                        blockedFeature = .cameraCapture
                     }
                 }
             }
