@@ -126,7 +126,7 @@ struct PSAImportView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 160)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
 
             Text("We couldn't read the cert number automatically. Enter it below.")

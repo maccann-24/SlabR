@@ -84,7 +84,7 @@ struct ListingDefaultsView: View {
                             .font(.cardMeta)
                             .foregroundColor(.labelSecondary)
                         Spacer()
-                        HStack(spacing: 4) {
+                        HStack(spacing: Spacing.xs) {
                             Text("$")
                                 .font(.cardMeta)
                                 .foregroundColor(.labelSecondary)

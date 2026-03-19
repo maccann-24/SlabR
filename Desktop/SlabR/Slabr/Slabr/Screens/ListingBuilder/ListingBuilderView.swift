@@ -86,7 +86,7 @@ struct ListingBuilderView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .frame(maxWidth: .infinity)
             }
         }
@@ -103,7 +103,7 @@ struct ListingBuilderView: View {
 
                 Text("\(viewModel.title.count)/80")
                     .font(.caption)
-                    .foregroundColor(viewModel.title.count > 80 ? .red : .labelSecondary)
+                    .foregroundColor(viewModel.title.count > 80 ? .negative : .labelSecondary)
             }
         }
     }
@@ -113,7 +113,7 @@ struct ListingBuilderView: View {
     private var priceSection: some View {
         CardSection(title: "Price") {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: 4) {
+                HStack(spacing: Spacing.xs) {
                     Text("$")
                         .font(.heroNumber)
                         .foregroundColor(.labelSecondary)
@@ -129,7 +129,7 @@ struct ListingBuilderView: View {
                 if let error = viewModel.priceError {
                     Text(error)
                         .font(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(.negative)
                 }
             }
         }
@@ -165,7 +165,7 @@ struct ListingBuilderView: View {
                             .font(.cardMeta)
                             .foregroundColor(.labelSecondary)
                         Spacer()
-                        HStack(spacing: 4) {
+                        HStack(spacing: Spacing.xs) {
                             Text("$")
                                 .font(.cardMeta)
                                 .foregroundColor(.labelSecondary)
@@ -251,10 +251,10 @@ struct ListingBuilderView: View {
     private func errorBanner(_ message: String) -> some View {
         Text(message)
             .font(.cardMeta)
-            .foregroundColor(.red)
+            .foregroundColor(.negative)
             .padding(Spacing.cardPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.red.opacity(0.1))
+            .background(Color.negative.opacity(0.1))
             .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 

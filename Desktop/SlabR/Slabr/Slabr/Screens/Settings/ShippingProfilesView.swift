@@ -175,10 +175,10 @@ struct ShippingProfilesView: View {
                     } label: {
                         Text("Delete")
                             .font(.cardTitle)
-                            .foregroundColor(.red)
+                            .foregroundColor(.negative)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(Color.red.opacity(0.1))
+                            .background(Color.negative.opacity(0.1))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                 }
