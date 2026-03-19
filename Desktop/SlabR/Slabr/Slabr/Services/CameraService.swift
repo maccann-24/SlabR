@@ -35,10 +35,14 @@ final class CameraService: NSObject, CameraServiceProtocol {
     private var device: AVCaptureDevice?
     private let detectionService: CardDetectionServiceProtocol
     private let photoOutput = AVCapturePhotoOutput()
-    private var photoContinuation: CheckedContinuation<UIImage?, Never>?
-    private var cardTypeVotes: [CardScanType: Int] = [:]
-    private var cardTypeResolved = false
-    private var detectionFrameCount = 0
+    private struct CardDetectionState {
+        var votes: [CardScanType: Int] = [:]
+        var resolved = false
+        var frameCount = 0
+    }
+
+    private let photoLock = OSAllocatedUnfairLock<CheckedContinuation<UIImage?, Never>?>(initialState: nil)
+    private let detectionState = OSAllocatedUnfairLock(initialState: CardDetectionState())
 
     init(detectionService: CardDetectionServiceProtocol = CardDetectionService()) {
         self.detectionService = detectionService
@@ -127,14 +131,16 @@ final class CameraService: NSObject, CameraServiceProtocol {
 
     func resumeDetection() {
         isDetectionPaused.withLock { $0 = false }
-        cardTypeResolved = false
-        cardTypeVotes = [:]
-        detectionFrameCount = 0
+        detectionState.withLock { state in
+            state.resolved = false
+            state.votes = [:]
+            state.frameCount = 0
+        }
     }
 
     func capturePhoto() async -> UIImage? {
         await withCheckedContinuation { continuation in
-            self.photoContinuation = continuation
+            photoLock.withLock { $0 = continuation }
             let settings = AVCapturePhotoSettings()
             self.photoOutput.capturePhoto(with: settings, delegate: self)
         }
@@ -176,23 +182,31 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
 
         // Phase 1: Card type detection (first ~10 frames)
-        if !cardTypeResolved {
-            detectionFrameCount += 1
+        let isResolved = detectionState.withLock { $0.resolved }
+        if !isResolved {
             let vote = detectionService.detectCardType(from: cgImage)
-            cardTypeVotes[vote, default: 0] += 1
 
-            // After 10 frames (~5s at 2fps), resolve by majority vote
-            if detectionFrameCount >= 10 {
-                let resolved = cardTypeVotes.max(by: { $0.value < $1.value })?.key ?? .unknown
-                cardTypeResolved = true
+            let resolvedType: CardScanType? = detectionState.withLock { state in
+                guard !state.resolved else { return nil }
+                state.frameCount += 1
+                state.votes[vote, default: 0] += 1
+
+                // After 10 frames (~5s at 2fps), resolve by majority vote
+                if state.frameCount >= 10 {
+                    let winner = state.votes.max(by: { $0.value < $1.value })?.key ?? .unknown
+                    state.resolved = true
+                    return winner
+                } else if let (type, count) = state.votes.max(by: { $0.value < $1.value }), count >= 5 {
+                    // Early resolution if 5+ consistent votes
+                    state.resolved = true
+                    return type
+                }
+                return nil
+            }
+
+            if let resolved = resolvedType {
                 DispatchQueue.main.async { [weak self] in
                     self?.onCardTypeDetected?(resolved)
-                }
-            } else if let (type, count) = cardTypeVotes.max(by: { $0.value < $1.value }), count >= 5 {
-                // Early resolution if 5+ consistent votes
-                cardTypeResolved = true
-                DispatchQueue.main.async { [weak self] in
-                    self?.onCardTypeDetected?(type)
                 }
             }
             return // Skip OCR during detection phase
@@ -221,17 +235,23 @@ extension CameraService: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error {
             Log.camera.error("Photo capture failed: \(error)")
-            photoContinuation?.resume(returning: nil)
-            photoContinuation = nil
+            photoLock.withLock { cont in
+                cont?.resume(returning: nil)
+                cont = nil
+            }
             return
         }
         guard let data = photo.fileDataRepresentation(),
               let image = UIImage(data: data) else {
-            photoContinuation?.resume(returning: nil)
-            photoContinuation = nil
+            photoLock.withLock { cont in
+                cont?.resume(returning: nil)
+                cont = nil
+            }
             return
         }
-        photoContinuation?.resume(returning: image)
-        photoContinuation = nil
+        photoLock.withLock { cont in
+            cont?.resume(returning: image)
+            cont = nil
+        }
     }
 }

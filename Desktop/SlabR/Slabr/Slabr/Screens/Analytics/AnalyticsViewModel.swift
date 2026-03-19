@@ -40,6 +40,7 @@ final class AnalyticsViewModel: ObservableObject {
         let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
         request.predicate = NSPredicate(format: "userId == %@", userId)
         request.relationshipKeyPathsForPrefetching = ["card"]
+        request.fetchBatchSize = 50
 
         do {
             allListings = try context.fetch(request)
@@ -56,6 +57,8 @@ final class AnalyticsViewModel: ObservableObject {
         buildPriceByGrade()
         buildSourceBreakdown()
         buildStatusBreakdown()
+
+        allListings = [] // Release memory — aggregated data is in @Published properties
     }
 
     // MARK: - Aggregations
@@ -75,10 +78,13 @@ final class AnalyticsViewModel: ObservableObject {
     }
 
     private func buildPriceByGrade() {
-        let withPrice = allListings.filter { $0.listingPrice != nil && $0.card?.grade != nil }
-        let grouped = Dictionary(grouping: withPrice) { $0.card!.grade! }
-        priceByGrade = grouped.compactMap { grade, listings in
-            let prices = listings.compactMap { $0.listingPrice as Decimal? }
+        let withPrice: [(listing: ListingRecord, grade: String)] = allListings.compactMap { listing in
+            guard listing.listingPrice != nil, let grade = listing.card?.grade, !grade.isEmpty else { return nil }
+            return (listing, grade)
+        }
+        let grouped = Dictionary(grouping: withPrice) { $0.grade }
+        priceByGrade = grouped.compactMap { grade, items in
+            let prices = items.compactMap { $0.listing.listingPrice as Decimal? }
             guard !prices.isEmpty else { return nil }
             let avg = prices.reduce(0, +) / Decimal(prices.count)
             return PriceItem(label: "PSA \(grade)", avgPrice: avg)
@@ -106,12 +112,41 @@ final class AnalyticsViewModel: ObservableObject {
 
     // MARK: - CSV Export
 
+    private func escapeCSVField(_ field: String) -> String {
+        var escaped = field
+        // Neutralize formula injection (CWE-1236)
+        if let first = escaped.first, "=+-@\t\r".contains(first) {
+            escaped = "'" + escaped
+        }
+        // RFC 4180: quote fields containing special characters, double internal quotes
+        if escaped.contains("\"") || escaped.contains(",") || escaped.contains("\n") || escaped.contains("\r") {
+            escaped = escaped.replacingOccurrences(of: "\"", with: "\"\"")
+            escaped = "\"\(escaped)\""
+        }
+        return escaped
+    }
+
     func exportCSV() -> URL? {
+        guard let context else { return nil }
+
+        let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+        request.predicate = NSPredicate(format: "userId == %@", userId)
+        request.relationshipKeyPathsForPrefetching = ["card"]
+        request.fetchBatchSize = 50
+
+        let listings: [ListingRecord]
+        do {
+            listings = try context.fetch(request)
+        } catch {
+            Log.listings.error("CSV export fetch failed: \(error)")
+            return nil
+        }
+
         var csv = "Date,Player,Year,Brand,Set,Grade,Cert,Price,Status,Source\n"
 
         let dateFormatter = ISO8601DateFormatter()
 
-        for listing in allListings {
+        for listing in listings {
             let card = listing.card
             let date = listing.date.map { dateFormatter.string(from: $0) } ?? ""
             let player = card?.playerName ?? ""
@@ -125,7 +160,7 @@ final class AnalyticsViewModel: ObservableObject {
             let source = listing.entryPoint ?? ""
 
             let row = [date, player, year, brand, setName, grade, cert, price, status, source]
-                .map { $0.replacingOccurrences(of: ",", with: " ") }
+                .map { escapeCSVField($0) }
                 .joined(separator: ",")
             csv += row + "\n"
         }

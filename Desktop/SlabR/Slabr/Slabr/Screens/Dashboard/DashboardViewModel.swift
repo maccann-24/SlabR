@@ -30,26 +30,37 @@ final class DashboardViewModel: ObservableObject {
     // MARK: - Private
 
     private func loadCounts(context: NSManagedObjectContext) {
-        let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
-        request.predicate = NSPredicate(format: "userId == %@", userId)
-
         do {
-            let all = try context.fetch(request)
-            totalCards = all.count
-            draftCount = all.filter { $0.status == RecordStatus.draft.rawValue }.count
-            activeCount = all.filter { $0.status == RecordStatus.listed.rawValue }.count
+            let allRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            allRequest.predicate = NSPredicate(format: "userId == %@", userId)
+            totalCards = try context.count(for: allRequest)
+
+            let draftRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            draftRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.draft.rawValue)
+            draftCount = try context.count(for: draftRequest)
+
+            let activeRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            activeRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.listed.rawValue)
+            activeCount = try context.count(for: activeRequest)
         } catch {
             Log.listings.error("Dashboard count fetch failed: \(error)")
         }
     }
 
     private func loadListedValue(context: NSManagedObjectContext) {
-        let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "ListingRecord")
         request.predicate = NSPredicate(format: "userId == %@ AND status == %@ AND listingPrice != nil", userId, RecordStatus.listed.rawValue)
+        request.resultType = .dictionaryResultType
+
+        let sumExpr = NSExpressionDescription()
+        sumExpr.name = "totalPrice"
+        sumExpr.expression = NSExpression(forFunction: "sum:", arguments: [NSExpression(forKeyPath: "listingPrice")])
+        sumExpr.expressionResultType = .decimalAttributeType
+        request.propertiesToFetch = [sumExpr]
 
         do {
-            let listed = try context.fetch(request)
-            listedValue = listed.compactMap { $0.listingPrice as Decimal? }.reduce(0, +)
+            let results = try context.fetch(request)
+            listedValue = (results.first as? NSDictionary)?["totalPrice"] as? Decimal ?? 0
         } catch {
             Log.listings.error("Dashboard value fetch failed: \(error)")
         }

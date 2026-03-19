@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Feature gating based on subscription tiers. Defines 5 tiers (free → power)
 /// plus a lifetime tier, and maps 9 features to their required minimum tier.
@@ -14,8 +15,8 @@ final class AccessControl {
     private static let trialDurationDays = 7
     static let iso8601Formatter = ISO8601DateFormatter()
 
-    /// Cached trial days remaining, refreshed at most once per minute.
-    private static var cachedTrialDays: (value: Int, expiry: Date)?
+    /// Cached trial days remaining, refreshed at most once per minute. Thread-safe via lock.
+    private static let trialCache = OSAllocatedUnfairLock<(value: Int, expiry: Date)?>(initialState: nil)
 
     // MARK: - Access Checks
 
@@ -44,18 +45,20 @@ final class AccessControl {
     /// Returns the number of trial days remaining (0 if expired or no trial date found).
     /// Cached for 60 seconds to avoid repeated Keychain I/O and date parsing.
     static func trialDaysRemaining() -> Int {
-        if let cached = cachedTrialDays, cached.expiry > Date() {
-            return cached.value
+        trialCache.withLock { cached in
+            if let cached, cached.expiry > Date() {
+                return cached.value
+            }
+            guard let dateString = KeychainHelper.read(key: "trialStartDate"),
+                  let startDate = iso8601Formatter.date(from: dateString) else {
+                cached = (0, Date().addingTimeInterval(60))
+                return 0
+            }
+            let elapsed = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
+            let remaining = max(0, trialDurationDays - elapsed)
+            cached = (remaining, Date().addingTimeInterval(60))
+            return remaining
         }
-        guard let dateString = KeychainHelper.read(key: "trialStartDate"),
-              let startDate = iso8601Formatter.date(from: dateString) else {
-            cachedTrialDays = (0, Date().addingTimeInterval(60))
-            return 0
-        }
-        let elapsed = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        let remaining = max(0, trialDurationDays - elapsed)
-        cachedTrialDays = (remaining, Date().addingTimeInterval(60))
-        return remaining
     }
 
     // MARK: - Feature

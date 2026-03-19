@@ -33,10 +33,6 @@ final class AppState: ObservableObject {
             KeychainHelper.save(key: "trialStartDate", value: AccessControl.iso8601Formatter.string(from: Date()))
             self.userId = newId
         }
-        // Seed trial date for existing users who upgrade to this version
-        if KeychainHelper.read(key: "trialStartDate") == nil {
-            KeychainHelper.save(key: "trialStartDate", value: AccessControl.iso8601Formatter.string(from: Date()))
-        }
     }
 }
 
@@ -45,6 +41,8 @@ final class AppState: ObservableObject {
 /// hardware-encrypted, excluded from backups, and inaccessible on other devices.
 /// Errors are logged via `Log.keychain` at the `error` level.
 enum KeychainHelper {
+    private static let serviceName = "com.exosource.slabr"
+
     /// Saves a UTF-8 string to the Keychain. Deletes any existing value first (upsert pattern).
     /// Returns `true` on success. Logs `OSStatus` on failure.
     @discardableResult
@@ -52,6 +50,7 @@ enum KeychainHelper {
         guard let data = value.data(using: .utf8) else { return false }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
@@ -67,6 +66,7 @@ enum KeychainHelper {
     static func read(key: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
@@ -80,6 +80,7 @@ enum KeychainHelper {
     static func delete(key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key
         ]
         let status = SecItemDelete(query as CFDictionary)

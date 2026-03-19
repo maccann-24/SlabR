@@ -138,9 +138,21 @@ final class ListingBuilderViewModel: ObservableObject {
         state = .publishing
         writeFormToListing()
 
+        let request = ListingPublishRequest(
+            title: listing.effectiveListingTitle,
+            price: listing.listingPrice as? Decimal ?? 0,
+            condition: listing.card?.condition
+        )
+
         Task {
             do {
-                let listingId = try await ebayService.publishListing(listing: listing, context: context)
+                let listingId = try await ebayService.publishListing(request: request)
+
+                listing.listingId = listingId
+                listing.status = RecordStatus.listed.rawValue
+                listing.listedDate = .now
+                try context.save()
+
                 HapticManager.shared.listingPublished()
                 state = .published(listingId: listingId)
             } catch {

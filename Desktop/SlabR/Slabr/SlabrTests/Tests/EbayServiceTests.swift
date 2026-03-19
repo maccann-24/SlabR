@@ -1,15 +1,12 @@
 import XCTest
-import CoreData
 @testable import Slabr
 
 final class EbayServiceTests: XCTestCase {
 
-    private var context = TestCoreDataStack.makeContext()
-
     func testPublishRejectsMissingPrice() async {
-        let record = TestCoreDataStack.makeListingRecord(context: context, price: nil)
+        let request = ListingPublishRequest(title: "Test Card", price: 0, condition: nil)
         do {
-            _ = try await EbayService.shared.publishListing(listing: record, context: context)
+            _ = try await EbayService.shared.publishListing(request: request)
             XCTFail("Expected missingPrice error")
         } catch let error as EbayService.EbayServiceError {
             XCTAssertEqual(error.errorDescription, "A listing price is required.")
@@ -20,9 +17,9 @@ final class EbayServiceTests: XCTestCase {
 
     func testPublishRejectsTitleOver80Chars() async {
         let longTitle = String(repeating: "A", count: 81)
-        let record = TestCoreDataStack.makeListingRecord(context: context, price: 9.99, title: longTitle)
+        let request = ListingPublishRequest(title: longTitle, price: 9.99, condition: nil)
         do {
-            _ = try await EbayService.shared.publishListing(listing: record, context: context)
+            _ = try await EbayService.shared.publishListing(request: request)
             XCTFail("Expected titleTooLong error")
         } catch let error as EbayService.EbayServiceError {
             XCTAssertEqual(error.errorDescription, "Title must be 80 characters or fewer.")
@@ -31,16 +28,15 @@ final class EbayServiceTests: XCTestCase {
         }
     }
 
-    func testPublishSetsListedStatusAndDate() async throws {
-        let record = TestCoreDataStack.makeListingRecord(context: context, price: 29.99)
-        let listingId = try await EbayService.shared.publishListing(listing: record, context: context)
+    func testPublishReturnsListingId() async throws {
+        let request = ListingPublishRequest(title: "Test Card PSA 10", price: 29.99, condition: nil)
+        let listingId = try await EbayService.shared.publishListing(request: request)
         XCTAssertFalse(listingId.isEmpty)
-        XCTAssertEqual(record.status, RecordStatus.listed.rawValue)
-        XCTAssertNotNil(record.listedDate)
+        XCTAssertTrue(listingId.hasPrefix("SLABR-"))
     }
 
     func testCanPublishRejectsZeroPrice() {
-        let record = TestCoreDataStack.makeListingRecord(context: context, price: 0)
-        XCTAssertFalse(EbayService.shared.canPublish(listing: record))
+        let request = ListingPublishRequest(title: "Test", price: 0, condition: nil)
+        XCTAssertFalse(EbayService.shared.canPublish(request: request))
     }
 }

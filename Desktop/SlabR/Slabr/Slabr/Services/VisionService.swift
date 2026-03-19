@@ -1,3 +1,4 @@
+import os
 import Vision
 import UIKit
 
@@ -30,10 +31,14 @@ enum VisionService {
     /// VNRecognizeTextRequest callback and the `perform()` catch block fire.
     private static func performOCR(on cgImage: CGImage) async throws -> [String] {
         try await withCheckedThrowingContinuation { continuation in
-            var hasResumed = false
+            let hasResumed = OSAllocatedUnfairLock(initialState: false)
             let resume: (Result<[String], Error>) -> Void = { result in
-                guard !hasResumed else { return }
-                hasResumed = true
+                let alreadyResumed = hasResumed.withLock { current in
+                    let was = current
+                    current = true
+                    return was
+                }
+                guard !alreadyResumed else { return }
                 continuation.resume(with: result)
             }
 

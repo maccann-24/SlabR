@@ -7,12 +7,9 @@ extension Font {
     static let cardMeta: Font = .subheadline
     static let captionMedium: Font = .caption.weight(.medium)
     static let metricNumber: Font = .system(size: 28, weight: .semibold)
-    static let buttonLabel: Font = .body.weight(.semibold)
     static let metricLabel: Font = .caption
     static let tabLabel: Font = .system(size: 10)
     static let trendIndicator: Font = .system(size: 15, weight: .semibold)
-    static let chipLabel: Font = .caption
-    static let chipLabelActive: Font = .caption.weight(.semibold)
 }
 
 extension Text {

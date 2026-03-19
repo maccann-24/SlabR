@@ -83,18 +83,19 @@ struct CameraView: View {
         }
     }
 
-    // MARK: - PSA Guide Overlay
+    // MARK: - Guide Overlay
 
-    private var psaGuideOverlay: some View {
+    private func guideOverlay(
+        width: CGFloat, height: CGFloat, yFraction: CGFloat,
+        label: String, showScanLine: Bool = false
+    ) -> some View {
         GeometryReader { geo in
-            let frameWidth: CGFloat = 300
-            let frameHeight: CGFloat = 100
-            let frameY = geo.size.height * 0.55
+            let frameY = geo.size.height * yFraction
 
             ZStack {
                 Color.black.opacity(0.4).ignoresSafeArea()
                 RoundedRectangle(cornerRadius: 16)
-                    .frame(width: frameWidth, height: frameHeight)
+                    .frame(width: width, height: height)
                     .position(x: geo.size.width / 2, y: frameY)
                     .blendMode(.destinationOut)
             }
@@ -102,48 +103,29 @@ struct CameraView: View {
 
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(Color.brandAccent.opacity(0.6), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-                .frame(width: frameWidth, height: frameHeight)
+                .frame(width: width, height: height)
                 .position(x: geo.size.width / 2, y: frameY)
 
-            Rectangle()
-                .fill(Color.brandAccent.opacity(0.3))
-                .frame(width: frameWidth - 16, height: 2)
-                .position(x: geo.size.width / 2, y: frameY - frameHeight / 2 + scanLineOffset)
+            if showScanLine {
+                Rectangle()
+                    .fill(Color.brandAccent.opacity(0.3))
+                    .frame(width: width - 16, height: 2)
+                    .position(x: geo.size.width / 2, y: frameY - height / 2 + scanLineOffset)
+            }
 
-            Text("Position slab label in frame")
+            Text(label)
                 .font(.cardMeta)
                 .foregroundColor(.white.opacity(0.8))
-                .position(x: geo.size.width / 2, y: frameY + frameHeight / 2 + 24)
+                .position(x: geo.size.width / 2, y: frameY + height / 2 + 24)
         }
     }
 
-    // MARK: - Raw Card Guide Overlay
+    private var psaGuideOverlay: some View {
+        guideOverlay(width: 300, height: 100, yFraction: 0.55, label: "Position slab label in frame", showScanLine: true)
+    }
 
     private var rawGuideOverlay: some View {
-        GeometryReader { geo in
-            let frameWidth: CGFloat = 260
-            let frameHeight: CGFloat = 360
-            let frameY = geo.size.height * 0.45
-
-            ZStack {
-                Color.black.opacity(0.4).ignoresSafeArea()
-                RoundedRectangle(cornerRadius: 16)
-                    .frame(width: frameWidth, height: frameHeight)
-                    .position(x: geo.size.width / 2, y: frameY)
-                    .blendMode(.destinationOut)
-            }
-            .compositingGroup()
-
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.brandAccent.opacity(0.6), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-                .frame(width: frameWidth, height: frameHeight)
-                .position(x: geo.size.width / 2, y: frameY)
-
-            Text("Position card in frame")
-                .font(.cardMeta)
-                .foregroundColor(.white.opacity(0.8))
-                .position(x: geo.size.width / 2, y: frameY + frameHeight / 2 + 24)
-        }
+        guideOverlay(width: 260, height: 360, yFraction: 0.45, label: "Position card in frame")
     }
 
     // MARK: - State Content
@@ -151,107 +133,58 @@ struct CameraView: View {
     @ViewBuilder
     private var stateContent: some View {
         switch viewModel.state {
-        case .detecting:
-            VStack(spacing: Spacing.md) {
-                ProgressView()
-                    .tint(.white)
-                Text("Scanning...")
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
-            }
+        case .detecting:                statusOverlay(icon: nil, message: "Scanning...", showSpinner: true)
+        case .detectedType(let type):   detectedTypeBadge(type)
+        case .scanning, .rawReady:      EmptyView()
+        case .detected(let cert):       certBadge(cert)
+        case .lookingUp(let cert):      statusOverlay(icon: nil, message: "Looking up \(cert)...", showSpinner: true)
+        case .found(let card):          ScrollView { PSACardDetailView(card: card).padding(.horizontal, Spacing.screenMargin) }.frame(maxHeight: 300)
+        case .rawCaptured(let image):   Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 8))
+        case .notFound(let cert):       statusOverlay(icon: "magnifyingglass", title: "Cert not found", message: "No results for \(cert).")
+        case .error(let msg):           statusOverlay(icon: "exclamationmark.triangle", message: msg)
+        case .manualEntry:              manualEntryContent
+        case .saved:                    savedContent
+        }
+    }
 
-        case .detectedType(let type):
-            detectedTypeBadge(type)
+    // MARK: - State Content Helpers
 
-        case .scanning:
-            EmptyView()
+    private func statusOverlay(icon: String? = nil, title: String? = nil, message: String, showSpinner: Bool = false) -> some View {
+        VStack(spacing: Spacing.md) {
+            if showSpinner { ProgressView().tint(.white) }
+            if let icon { Image(systemName: icon).font(.system(size: 40)).foregroundColor(.white.opacity(0.5)) }
+            if let title { Text(title).font(.cardTitle).foregroundColor(.white) }
+            Text(message).font(.cardMeta).foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
+        }
+    }
 
-        case .detected(let cert):
-            VStack(spacing: Spacing.md) {
-                Text(cert)
-                    .font(.system(size: 32, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.vertical, Spacing.sm)
-                    .background(Color.brandAccent)
-                    .clipShape(Capsule())
-                Text("Cert number detected")
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
-            }
+    private func certBadge(_ cert: String) -> some View {
+        VStack(spacing: Spacing.md) {
+            Text(cert)
+                .font(.system(size: 32, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.sm)
+                .background(Color.brandAccent)
+                .clipShape(Capsule())
+            Text("Cert number detected")
+                .font(.cardMeta)
+                .foregroundColor(.white.opacity(0.7))
+        }
+    }
 
-        case .lookingUp(let cert):
-            VStack(spacing: Spacing.md) {
-                ProgressView()
-                    .tint(.white)
-                Text("Looking up \(cert)...")
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
-            }
-
-        case .found(let card):
-            ScrollView {
-                PSACardDetailView(card: card)
-                    .padding(.horizontal, Spacing.screenMargin)
-            }
-            .frame(maxHeight: 300)
-
-        case .rawReady:
-            EmptyView()
-
-        case .rawCaptured(let image):
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .frame(maxHeight: 300)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-
-        case .notFound(let cert):
-            VStack(spacing: Spacing.md) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 40))
-                    .foregroundColor(.white.opacity(0.5))
-                Text("Cert not found")
-                    .font(.cardTitle)
-                    .foregroundColor(.white)
-                Text("No results for \(cert).")
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-            }
-
-        case .error(let msg):
-            VStack(spacing: Spacing.md) {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 40))
-                    .foregroundColor(.white.opacity(0.5))
-                Text(msg)
-                    .font(.cardMeta)
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-            }
-
-        case .manualEntry:
-            VStack(spacing: Spacing.md) {
-                Text("Enter cert number")
-                    .font(.cardTitle)
-                    .foregroundColor(.white)
-                SlabRTextField(
-                    placeholder: "8-digit cert number",
-                    text: $viewModel.manualCertNumber
-                )
+    private var manualEntryContent: some View {
+        VStack(spacing: Spacing.md) {
+            Text("Enter cert number").font(.cardTitle).foregroundColor(.white)
+            SlabRTextField(placeholder: "8-digit cert number", text: $viewModel.manualCertNumber)
                 .frame(maxWidth: 240)
-            }
+        }
+    }
 
-        case .saved:
-            VStack(spacing: Spacing.md) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.brandAccent)
-                Text("Draft saved")
-                    .font(.cardTitle)
-                    .foregroundColor(.white)
-            }
+    private var savedContent: some View {
+        VStack(spacing: Spacing.md) {
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 48)).foregroundColor(.brandAccent)
+            Text("Draft saved").font(.cardTitle).foregroundColor(.white)
         }
     }
 
@@ -268,7 +201,6 @@ struct CameraView: View {
                 .padding(.vertical, Spacing.sm)
                 .background(Color.positive)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
-                .scaleEffect(reduceMotion ? 1 : 1)
                 .transition(.scale.combined(with: .opacity))
 
         case .rawCard:

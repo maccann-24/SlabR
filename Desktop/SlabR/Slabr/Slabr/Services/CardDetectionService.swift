@@ -12,6 +12,16 @@ protocol CardDetectionServiceProtocol {
 final class CardDetectionService: CardDetectionServiceProtocol {
     private let ciContext = CIContext()
 
+    private enum Thresholds {
+        static let cropInsetX: CGFloat = 0.3
+        static let cropSize: CGFloat = 0.4
+        static let psaHueMin: CGFloat = 30
+        static let psaHueMax: CGFloat = 65
+        static let psaSaturationMin: CGFloat = 0.25
+        static let psaBrightnessMin: CGFloat = 0.4
+        static let neutralSaturationMax: CGFloat = 0.15
+    }
+
     func detectCardType(from cgImage: CGImage) -> CardScanType {
         let ciImage = CIImage(cgImage: cgImage)
 
@@ -19,10 +29,10 @@ final class CardDetectionService: CardDetectionServiceProtocol {
         let width = ciImage.extent.width
         let height = ciImage.extent.height
         let cropRect = CGRect(
-            x: width * 0.3,
-            y: height * 0.3,
-            width: width * 0.4,
-            height: height * 0.4
+            x: width * Thresholds.cropInsetX,
+            y: height * Thresholds.cropInsetX,
+            width: width * Thresholds.cropSize,
+            height: height * Thresholds.cropSize
         )
         let cropped = ciImage.cropped(to: cropRect)
 
@@ -60,12 +70,13 @@ final class CardDetectionService: CardDetectionServiceProtocol {
         let hueDegrees = hue * 360
 
         // PSA gold range: hue ~30-65°, saturation > 0.25, brightness > 0.4
-        if hueDegrees >= 30 && hueDegrees <= 65 && saturation > 0.25 && brightness > 0.4 {
+        if hueDegrees >= Thresholds.psaHueMin && hueDegrees <= Thresholds.psaHueMax
+            && saturation > Thresholds.psaSaturationMin && brightness > Thresholds.psaBrightnessMin {
             return .psaSlab
         }
 
         // Clear/neutral (low saturation) suggests raw card in sleeve/toploader
-        if saturation < 0.15 {
+        if saturation < Thresholds.neutralSaturationMax {
             return .rawCard
         }
 

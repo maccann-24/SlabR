@@ -1,3 +1,4 @@
+import CoreGraphics
 @testable import Slabr
 
 final class MockCardDetectionService: CardDetectionServiceProtocol {

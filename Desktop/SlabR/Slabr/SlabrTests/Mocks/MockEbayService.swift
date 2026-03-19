@@ -1,15 +1,16 @@
-import CoreData
 @testable import Slabr
 
 final class MockEbayService: EbayServiceProtocol {
     var publishResult: Result<String, Error> = .success("MOCK-ID")
     var canPublishResult = true
+    var lastPublishRequest: ListingPublishRequest?
 
-    func publishListing(listing: ListingRecord, context: NSManagedObjectContext) async throws -> String {
-        try publishResult.get()
+    func publishListing(request: ListingPublishRequest) async throws -> String {
+        lastPublishRequest = request
+        return try publishResult.get()
     }
 
-    func canPublish(listing: ListingRecord) -> Bool {
+    func canPublish(request: ListingPublishRequest) -> Bool {
         canPublishResult
     }
 }

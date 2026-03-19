@@ -204,9 +204,12 @@ final class CameraViewModel: ObservableObject {
     func proceedWithRawCard() {
         guard let context, let image = capturedImage else { return }
 
+        let thumbnailData = image.jpegData(compressionQuality: 0.7)
+        capturedImage = nil // Release full-res image (~36MB) — thumbnail data is sufficient
+
         let listing = ListingRecordFactory.createRawDraft(
             userId: userId,
-            thumbnailData: image.jpegData(compressionQuality: 0.7),
+            thumbnailData: thumbnailData,
             in: context
         )
 

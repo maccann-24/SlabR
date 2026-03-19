@@ -1,6 +1,9 @@
 import CoreData
 
 extension CardRecord {
+    // Note: `entryMethod` tracks how card data was captured ("camera_psa", "camera_raw", "photo_import").
+    // This is distinct from ListingRecord.entryPoint which tracks the user-facing flow ("psa", "camera").
+
     /// Generates an eBay-style listing title from card metadata.
     /// Parts are ordered: year, brand, set, player, #cardNumber, PSA grade, parallel.
     /// Empty/nil parts are skipped. If the result exceeds 80 characters, it is truncated

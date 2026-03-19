@@ -1,7 +1,7 @@
-import CoreData
+import Foundation
 
-/// eBay listing service. **Currently a mock** — generates fake listing IDs and
-/// saves status locally. Does not make real eBay API calls.
+/// eBay listing service. **Currently a mock** — generates fake listing IDs.
+/// Does not make real eBay API calls.
 /// Conforms to `EbayServiceProtocol` for testability via mock injection.
 final class EbayService {
     static let shared = EbayService()
@@ -11,7 +11,6 @@ final class EbayService {
         case missingPrice
         case missingTitle
         case titleTooLong
-        case saveFailed(Error)
 
         var errorDescription: String? {
             switch self {
@@ -21,46 +20,28 @@ final class EbayService {
                 return "A listing title is required."
             case .titleTooLong:
                 return "Title must be 80 characters or fewer."
-            case .saveFailed(let error):
-                return "Failed to save listing: \(error.localizedDescription)"
             }
         }
     }
 
     /// Validates and "publishes" a listing. Currently generates a mock listing ID
     /// (format: `SLABR-XXXXXXXX`). Validates: price > 0, title non-empty, title <= 80 chars.
-    /// Sets `listing.status` to `.listed` and `listing.listedDate` to now.
-    func publishListing(listing: ListingRecord, context: NSManagedObjectContext) async throws -> String {
-        guard let price = listing.listingPrice as Decimal?, price > 0 else {
+    /// Core Data mutations are handled by the caller — this service is persistence-agnostic.
+    func publishListing(request: ListingPublishRequest) async throws -> String {
+        guard request.price > 0 else {
             throw EbayServiceError.missingPrice
         }
-
-        let title = listing.effectiveListingTitle
-        guard !title.isEmpty else {
+        guard !request.title.isEmpty else {
             throw EbayServiceError.missingTitle
         }
-        guard title.count <= 80 else {
+        guard request.title.count <= 80 else {
             throw EbayServiceError.titleTooLong
         }
 
-        let mockId = "SLABR-\(UUID().uuidString.prefix(8))"
-
-        listing.listingId = mockId
-        listing.status = RecordStatus.listed.rawValue
-        listing.listedDate = .now
-
-        do {
-            try context.save()
-        } catch {
-            throw EbayServiceError.saveFailed(error)
-        }
-
-        return mockId
+        return "SLABR-\(UUID().uuidString.prefix(8))"
     }
 
-    func canPublish(listing: ListingRecord) -> Bool {
-        guard let price = listing.listingPrice as Decimal?, price > 0 else { return false }
-        let title = listing.effectiveListingTitle
-        return !title.isEmpty && title.count <= 80
+    func canPublish(request: ListingPublishRequest) -> Bool {
+        request.price > 0 && !request.title.isEmpty && request.title.count <= 80
     }
 }

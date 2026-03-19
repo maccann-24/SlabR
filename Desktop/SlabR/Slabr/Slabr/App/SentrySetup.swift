@@ -2,13 +2,19 @@ import Foundation
 import Sentry
 
 /// Sentry crash reporting initialization. Disabled in DEBUG builds to avoid dev noise.
-/// DSN is read from the `SENTRY_DSN` environment variable (falls back to a placeholder).
+/// DSN is read from Info.plist (injected via xcconfig/build settings at build time).
 enum SentrySetup {
     /// Call once from `SlabrApp.init()`. Configures session tracking and a 20% traces sample rate.
     static func start() {
+        guard let dsn = Bundle.main.infoDictionary?["SENTRY_DSN"] as? String,
+              !dsn.isEmpty,
+              dsn != "$(SENTRY_DSN)" else {
+            Log.settings.info("Sentry DSN not configured — crash reporting disabled")
+            return
+        }
+
         SentrySDK.start { options in
-            options.dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"]
-                ?? "https://placeholder@sentry.io/0"
+            options.dsn = dsn
 
             #if DEBUG
             options.enabled = false

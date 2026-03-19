@@ -1,4 +1,5 @@
 import AVFoundation
+import UIKit
 @testable import Slabr
 
 final class MockCameraService: CameraServiceProtocol {

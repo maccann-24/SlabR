@@ -30,6 +30,10 @@ struct ThumbnailView: View {
 
     private func decode() {
         guard let data else { image = nil; return }
-        image = UIImage(data: data)
+        let capturedData = data
+        Task.detached(priority: .userInitiated) {
+            let decoded = UIImage(data: capturedData)
+            await MainActor.run { image = decoded }
+        }
     }
 }

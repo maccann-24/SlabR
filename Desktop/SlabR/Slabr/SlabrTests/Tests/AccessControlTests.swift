@@ -31,9 +31,12 @@ final class AccessControlTests: XCTestCase {
 
     // MARK: - Feature Tier Mapping
 
+    func testFreeFeaturesRequireFreeTier() {
+        XCTAssertEqual(AccessControl.Feature.cameraCapture.requiredTier, .free)
+    }
+
     func testStarterFeaturesRequireStarterTier() {
         XCTAssertEqual(AccessControl.Feature.psaImport.requiredTier, .starter)
-        XCTAssertEqual(AccessControl.Feature.cameraCapture.requiredTier, .starter)
         XCTAssertEqual(AccessControl.Feature.directEbayPublish.requiredTier, .starter)
     }
 

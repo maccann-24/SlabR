@@ -150,7 +150,11 @@ final class PSAService {
     /// through unencoded in OAuth form bodies — a security fix for CWE-116.
     func urlEncode(_ string: String) -> String {
         let allowed = Self.urlEncodingAllowed
-        return string.addingPercentEncoding(withAllowedCharacters: allowed) ?? string
+        guard let encoded = string.addingPercentEncoding(withAllowedCharacters: allowed) else {
+            Log.psa.error("URL encoding failed for input — sending unencoded (this should not happen)")
+            return string
+        }
+        return encoded
     }
 }
 

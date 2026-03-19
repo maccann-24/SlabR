@@ -1,6 +1,9 @@
 import CoreData
 
 extension ListingRecord {
+    // Note: `entryPoint` tracks the user-facing flow that created this listing ("psa", "camera").
+    // This is distinct from CardRecord.entryMethod which tracks the technical capture method.
+
     /// Returns the user's custom listing title if set, otherwise falls back to
     /// the card's generated title.
     var effectiveListingTitle: String {
