@@ -23,7 +23,7 @@ final class CameraViewModel: ObservableObject {
 
         // Raw card flow
         case rawReady
-        case rawCaptured(UIImage)
+        case rawCaptured
         // Future: case rawIdentifying, case rawVerifying(PSACard, Int)
 
         // Shared
@@ -108,7 +108,7 @@ final class CameraViewModel: ObservableObject {
             try? await Task.sleep(for: .milliseconds(800))
             switch type {
             case .psaSlab:
-                guard KeychainHelper.read(key: "psaToken") != nil else {
+                guard KeychainHelper.read(key: KeychainKey.psaToken) != nil else {
                     state = .error("Sign in to PSA first (Settings → PSA account).")
                     return
                 }
@@ -193,7 +193,7 @@ final class CameraViewModel: ObservableObject {
         Task {
             if let image = await cameraService.capturePhoto() {
                 capturedImage = image
-                state = .rawCaptured(image)
+                state = .rawCaptured
             } else {
                 state = .error("Failed to capture photo.")
             }

@@ -25,12 +25,12 @@ final class AppState: ObservableObject {
     let userId: String
 
     init() {
-        if let existing = KeychainHelper.read(key: "userId") {
+        if let existing = KeychainHelper.read(key: KeychainKey.userId) {
             self.userId = existing
         } else {
             let newId = UUID().uuidString
-            KeychainHelper.save(key: "userId", value: newId)
-            KeychainHelper.save(key: "trialStartDate", value: AccessControl.iso8601Formatter.string(from: Date()))
+            KeychainHelper.save(key: KeychainKey.userId, value: newId)
+            KeychainHelper.save(key: KeychainKey.trialStartDate, value: AccessControl.iso8601Formatter.string(from: Date()))
             self.userId = newId
         }
     }
@@ -40,6 +40,13 @@ final class AppState: ObservableObject {
 /// Items are stored with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` — they are
 /// hardware-encrypted, excluded from backups, and inaccessible on other devices.
 /// Errors are logged via `Log.keychain` at the `error` level.
+enum KeychainKey {
+    static let userId = "userId"
+    static let psaToken = "psaToken"
+    static let psaTokenExpiry = "psaTokenExpiry"
+    static let trialStartDate = "trialStartDate"
+}
+
 enum KeychainHelper {
     private static let serviceName = "com.exosource.slabr"
 

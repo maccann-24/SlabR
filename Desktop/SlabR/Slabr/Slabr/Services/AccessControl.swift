@@ -49,7 +49,7 @@ final class AccessControl {
             if let cached, cached.expiry > Date() {
                 return cached.value
             }
-            guard let dateString = KeychainHelper.read(key: "trialStartDate"),
+            guard let dateString = KeychainHelper.read(key: KeychainKey.trialStartDate),
                   let startDate = iso8601Formatter.date(from: dateString) else {
                 cached = (0, Date().addingTimeInterval(60))
                 return 0

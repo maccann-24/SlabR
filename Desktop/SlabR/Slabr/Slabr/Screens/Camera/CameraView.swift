@@ -139,7 +139,7 @@ struct CameraView: View {
         case .detected(let cert):       certBadge(cert)
         case .lookingUp(let cert):      statusOverlay(icon: nil, message: "Looking up \(cert)...", showSpinner: true)
         case .found(let card):          ScrollView { PSACardDetailView(card: card).padding(.horizontal, Spacing.screenMargin) }.frame(maxHeight: 300)
-        case .rawCaptured(let image):   Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 8))
+        case .rawCaptured:              if let img = viewModel.capturedImage { Image(uiImage: img).resizable().scaledToFit().frame(maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 8)) }
         case .notFound(let cert):       statusOverlay(icon: "magnifyingglass", title: "Cert not found", message: "No results for \(cert).")
         case .error(let msg):           statusOverlay(icon: "exclamationmark.triangle", message: msg)
         case .manualEntry:              manualEntryContent

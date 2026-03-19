@@ -66,9 +66,9 @@ final class PSAService {
         }
 
         let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
-        KeychainHelper.save(key: "psaToken", value: tokenResponse.accessToken)
+        KeychainHelper.save(key: KeychainKey.psaToken, value: tokenResponse.accessToken)
         let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
-        KeychainHelper.save(key: "psaTokenExpiry", value: String(expiry.timeIntervalSince1970))
+        KeychainHelper.save(key: KeychainKey.psaTokenExpiry, value: String(expiry.timeIntervalSince1970))
     }
 
     // MARK: - Cert Lookup
@@ -76,7 +76,7 @@ final class PSAService {
     /// Looks up a PSA cert by number. The cert number is percent-encoded in the URL path.
     /// Returns a `PSACard` with grade, player, set info, and population data.
     func lookupCert(_ certNumber: String) async throws -> PSACard {
-        guard let token = KeychainHelper.read(key: "psaToken"),
+        guard let token = KeychainHelper.read(key: KeychainKey.psaToken),
               isTokenValid() else {
             throw PSAServiceError.notAuthenticated
         }
@@ -132,7 +132,7 @@ final class PSAService {
     // MARK: - Helpers
 
     private func isTokenValid() -> Bool {
-        guard let expiryString = KeychainHelper.read(key: "psaTokenExpiry"),
+        guard let expiryString = KeychainHelper.read(key: KeychainKey.psaTokenExpiry),
               let expiryTimestamp = Double(expiryString) else {
             return false
         }

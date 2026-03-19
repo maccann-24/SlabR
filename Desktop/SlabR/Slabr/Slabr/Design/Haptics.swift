@@ -21,10 +21,6 @@ final class HapticManager {
         medium.impactOccurred()
     }
 
-    func identificationDone() {
-        notification.notificationOccurred(.success)
-    }
-
     func listingPublished() {
         notification.notificationOccurred(.success)
     }
@@ -41,19 +37,7 @@ final class HapticManager {
         medium.impactOccurred()
     }
 
-    func batchTick() {
-        light.impactOccurred()
-    }
-
     func warning() {
         notification.notificationOccurred(.warning)
-    }
-
-    func swipeAction() {
-        light.impactOccurred()
-    }
-
-    func chartScrub() {
-        selection.selectionChanged()
     }
 }

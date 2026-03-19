@@ -49,7 +49,7 @@ final class PSAImportViewModel: ObservableObject {
     }
 
     func start() {
-        if KeychainHelper.read(key: "psaToken") == nil {
+        if KeychainHelper.read(key: KeychainKey.psaToken) == nil {
             state = .needsCredentials
         } else {
             state = .pickingImage

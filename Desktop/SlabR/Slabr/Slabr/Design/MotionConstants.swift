@@ -13,10 +13,6 @@ enum Motion {
         reduceMotion ? .linear(duration: 0) : .spring(response: 0.5, dampingFraction: 0.8).delay(delay)
     }
 
-    static func countUp(reduceMotion: Bool) -> Animation {
-        reduceMotion ? .linear(duration: 0) : .easeOut(duration: 0.6)
-    }
-
     static func tabSwitch(reduceMotion: Bool) -> Animation {
         reduceMotion ? .linear(duration: 0) : .spring(response: 0.3, dampingFraction: 0.75)
     }
@@ -26,5 +22,4 @@ enum Motion {
     static let primaryButtonPress: CGFloat = 0.97
     static let fabPress: CGFloat = 0.93
     static let tilePress: CGFloat = 0.97
-    static let settingsRowPress: CGFloat = 0.98
 }

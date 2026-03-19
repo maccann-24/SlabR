@@ -142,9 +142,8 @@ final class AnalyticsViewModel: ObservableObject {
             return nil
         }
 
-        var csv = "Date,Player,Year,Brand,Set,Grade,Cert,Price,Status,Source\n"
-
-        let dateFormatter = ISO8601DateFormatter()
+        let dateFormatter = AccessControl.iso8601Formatter
+        var rows = ["Date,Player,Year,Brand,Set,Grade,Cert,Price,Status,Source"]
 
         for listing in listings {
             let card = listing.card
@@ -159,11 +158,12 @@ final class AnalyticsViewModel: ObservableObject {
             let status = listing.status ?? ""
             let source = listing.entryPoint ?? ""
 
-            let row = [date, player, year, brand, setName, grade, cert, price, status, source]
+            rows.append([date, player, year, brand, setName, grade, cert, price, status, source]
                 .map { escapeCSVField($0) }
-                .joined(separator: ",")
-            csv += row + "\n"
+                .joined(separator: ","))
         }
+
+        let csv = rows.joined(separator: "\n") + "\n"
 
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("slabr-listings.csv")
         do {

@@ -232,26 +232,24 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
 // MARK: - Photo Capture
 
 extension CameraService: AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let error {
-            Log.camera.error("Photo capture failed: \(error)")
-            photoLock.withLock { cont in
-                cont?.resume(returning: nil)
-                cont = nil
-            }
-            return
-        }
-        guard let data = photo.fileDataRepresentation(),
-              let image = UIImage(data: data) else {
-            photoLock.withLock { cont in
-                cont?.resume(returning: nil)
-                cont = nil
-            }
-            return
-        }
+    private func resumePhotoContinuation(with image: UIImage?) {
         photoLock.withLock { cont in
             cont?.resume(returning: image)
             cont = nil
         }
+    }
+
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error {
+            Log.camera.error("Photo capture failed: \(error)")
+            resumePhotoContinuation(with: nil)
+            return
+        }
+        guard let data = photo.fileDataRepresentation(),
+              let image = UIImage(data: data) else {
+            resumePhotoContinuation(with: nil)
+            return
+        }
+        resumePhotoContinuation(with: image)
     }
 }

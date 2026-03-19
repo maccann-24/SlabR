@@ -11,25 +11,3 @@ extension Font {
     static let tabLabel: Font = .system(size: 10)
     static let trendIndicator: Font = .system(size: 15, weight: .semibold)
 }
-
-extension Text {
-    func heroNumber() -> Text {
-        self.font(.heroNumber)
-    }
-
-    func sectionHeader() -> Text {
-        self.font(.sectionHeader)
-    }
-
-    func cardTitle() -> Text {
-        self.font(.cardTitle)
-    }
-
-    func cardMeta() -> Text {
-        self.font(.cardMeta)
-    }
-
-    func captionMedium() -> Text {
-        self.font(.captionMedium)
-    }
-}
