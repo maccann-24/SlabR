@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="24D81" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="CardRecord" representedClassName="CardRecord" syncable="YES" codeGenerationType="class">
+        <attribute name="brand" attributeType="String"/>
+        <attribute name="cardNumber" attributeType="String"/>
+        <attribute name="certNumber" optional="YES" attributeType="String"/>
+        <attribute name="confidenceScore" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="grade" optional="YES" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isRookie" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="parallel" optional="YES" attributeType="String"/>
+        <attribute name="playerName" attributeType="String"/>
+        <attribute name="psaPopulation" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="setName" attributeType="String"/>
+        <attribute name="year" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="listings" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ListingRecord" inverseName="card" inverseEntity="ListingRecord"/>
+    </entity>
+    <entity name="ListingRecord" representedClassName="ListingRecord" syncable="YES" codeGenerationType="class">
+        <attribute name="acceptBestOffer" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="auctionDurationDays" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="entryPoint" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="listedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="listingFormat" optional="YES" attributeType="String"/>
+        <attribute name="listingId" optional="YES" attributeType="String"/>
+        <attribute name="listingPrice" optional="YES" attributeType="Decimal"/>
+        <attribute name="listingTitle" optional="YES" attributeType="String"/>
+        <attribute name="minimumOfferAmount" optional="YES" attributeType="Decimal"/>
+        <attribute name="status" attributeType="String" defaultValueString="draft"/>
+        <attribute name="userId" attributeType="String"/>
+        <relationship name="card" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CardRecord" inverseName="listings" inverseEntity="CardRecord"/>
+        <relationship name="media" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="MediaRecord" inverseName="listing" inverseEntity="MediaRecord"/>
+        <fetchIndex name="byUserStatusDate">
+            <fetchIndexElement property="userId" type="Binary" order="ascending"/>
+            <fetchIndexElement property="status" type="Binary" order="ascending"/>
+            <fetchIndexElement property="date" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="MediaRecord" representedClassName="MediaRecord" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="thumbnailData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <relationship name="listing" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ListingRecord" inverseName="media" inverseEntity="ListingRecord"/>
+    </entity>
+    <entity name="ShippingProfileEntity" representedClassName="ShippingProfileEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="buyerPays" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="handlingDays" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDefault" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="service" attributeType="String"/>
+        <attribute name="userId" attributeType="String"/>
+        <fetchIndex name="byUserId">
+            <fetchIndexElement property="userId" type="Binary" order="ascending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="ListingTemplateEntity" representedClassName="ListingTemplateEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="descriptionTemplate" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDefault" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="titleFormat" attributeType="String"/>
+    </entity>
+    <entity name="UserSettingsEntity" representedClassName="UserSettingsEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="acceptBestOffer" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="auctionDurationDays" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="buyItNowEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="defaultFormat" attributeType="String" defaultValueString="fixedPrice"/>
+        <attribute name="defaultShippingProfileId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="ebayLinked" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="listingDurationDays" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="minimumOfferAmount" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="psaLinked" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="returnPeriodDays" attributeType="Integer 16" defaultValueString="30" usesScalarValueType="YES"/>
+        <attribute name="returnsAccepted" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="sellerMode" attributeType="String" defaultValueString="standard"/>
+        <attribute name="userId" attributeType="String"/>
+        <fetchIndex name="byUserId">
+            <fetchIndexElement property="userId" type="Binary" order="ascending"/>
+        </fetchIndex>
+    </entity>
+</model>
