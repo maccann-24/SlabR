@@ -1,7 +1,5 @@
 import CoreData
 
-extension CardRecord: Identifiable {}
-
 extension CardRecord {
     /// Generates an eBay-style listing title from card metadata.
     /// Parts are ordered: year, brand, set, player, #cardNumber, PSA grade, parallel.

@@ -1,7 +1,5 @@
 import CoreData
 
-extension ListingRecord: Identifiable {}
-
 extension ListingRecord {
     /// Returns the user's custom listing title if set, otherwise falls back to
     /// the card's generated title.
