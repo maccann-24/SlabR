@@ -93,14 +93,14 @@ struct CameraView: View {
 
             ZStack {
                 Color.black.opacity(0.4).ignoresSafeArea()
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 16)
                     .frame(width: frameWidth, height: frameHeight)
                     .position(x: geo.size.width / 2, y: frameY)
                     .blendMode(.destinationOut)
             }
             .compositingGroup()
 
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(Color.brandAccent.opacity(0.6), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
                 .frame(width: frameWidth, height: frameHeight)
                 .position(x: geo.size.width / 2, y: frameY)

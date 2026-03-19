@@ -134,9 +134,10 @@ struct PSAImportView: View {
                 .foregroundColor(.labelSecondary)
                 .multilineTextAlignment(.center)
 
-            TextField("8-digit cert number", text: $viewModel.manualCertNumber)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
+            SlabRTextField(
+                placeholder: "8-digit cert number",
+                text: $viewModel.manualCertNumber
+            )
 
             PrimaryButton("Look up") { viewModel.submitManualCert() }
         }
