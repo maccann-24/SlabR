@@ -6,7 +6,6 @@ struct AnalyticsView: View {
     @Environment(\.managedObjectContext) private var context
     @StateObject private var viewModel = AnalyticsViewModel()
     @State private var showUpgradeSheet = false
-    @State private var showShareSheet = false
     @State private var csvURL: URL?
 
     var body: some View {
@@ -50,11 +49,6 @@ struct AnalyticsView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             UpgradeSheet(feature: .analyticsExport)
                 .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showShareSheet) {
-            if let url = csvURL {
-                ActivityShareSheet(items: [url])
-            }
         }
     }
 
@@ -145,7 +139,7 @@ struct AnalyticsView: View {
             if AccessControl.hasAccess(userId: appState.userId, feature: .analyticsExport) {
                 if let url = viewModel.exportCSV() {
                     csvURL = url
-                    showShareSheet = true
+                    presentShareSheet(url: url)
                 }
             } else {
                 showUpgradeSheet = true
@@ -159,5 +153,16 @@ struct AnalyticsView: View {
                 .background(Color.cardSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
+    }
+
+    private func presentShareSheet(url: URL) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else { return }
+        let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        // Find the topmost presented controller to avoid conflicts
+        var top = rootVC
+        while let presented = top.presentedViewController { top = presented }
+        vc.popoverPresentationController?.sourceView = top.view
+        top.present(vc, animated: true)
     }
 }

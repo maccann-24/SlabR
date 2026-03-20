@@ -39,6 +39,10 @@ struct SettingsView: View {
                     settingsRow(icon: "person.crop.circle", title: "PSA account")
 
                     sellerModeRow
+
+                    #if DEBUG
+                    debugSection
+                    #endif
                 }
                 .padding(.horizontal, Spacing.screenMargin)
             }
@@ -187,4 +191,37 @@ struct SettingsView: View {
             Log.settings.error("Failed to save seller mode: \(error)")
         }
     }
+
+    // MARK: - Debug
+
+    #if DEBUG
+    private var debugSection: some View {
+        VStack(spacing: Spacing.cardGap) {
+            Text("Debug")
+                .font(.captionMedium)
+                .foregroundColor(.negative)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, Spacing.lg)
+
+            Button {
+                SeedData.populate(context: context, userId: appState.userId)
+            } label: {
+                settingsRow(icon: "tray.full.fill", title: "Seed mock data")
+            }
+
+            Button {
+                SeedData.clear(context: context, userId: appState.userId)
+            } label: {
+                settingsRow(icon: "trash.fill", title: "Clear all data")
+            }
+
+            Button {
+                KeychainHelper.delete(key: KeychainKey.onboardingCompleted)
+                appState.hasCompletedOnboarding = false
+            } label: {
+                settingsRow(icon: "arrow.counterclockwise", title: "Reset onboarding")
+            }
+        }
+    }
+    #endif
 }
