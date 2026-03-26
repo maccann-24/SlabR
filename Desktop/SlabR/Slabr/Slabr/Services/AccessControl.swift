@@ -18,6 +18,12 @@ enum AccessControl {
     /// Cached trial days remaining, refreshed at most once per minute. Thread-safe via lock.
     private static let trialCache = OSAllocatedUnfairLock<(value: Int, expiry: Date)?>(initialState: nil)
 
+    /// Clears the trial cache so the next call to `trialDaysRemaining()` reads fresh Keychain data.
+    /// Intended for test use only.
+    static func invalidateTrialCache() {
+        trialCache.withLock { $0 = nil }
+    }
+
     // MARK: - Access Checks
 
     /// Returns whether a user's subscription tier grants access to a feature.
