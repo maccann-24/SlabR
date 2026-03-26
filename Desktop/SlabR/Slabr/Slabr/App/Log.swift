@@ -17,4 +17,7 @@ enum Log {
     static let importing  = Logger(subsystem: subsystem, category: "PSAImport")
     static let camera     = Logger(subsystem: subsystem, category: "Camera")
     static let onboarding = Logger(subsystem: subsystem, category: "Onboarding")
+    static let ebay      = Logger(subsystem: subsystem, category: "EbayService")
+    static let access    = Logger(subsystem: subsystem, category: "AccessControl")
+    static let analytics = Logger(subsystem: subsystem, category: "Analytics")
 }

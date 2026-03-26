@@ -26,13 +26,18 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Build
+      - name: Resolve simulator
+        id: sim
         run: |
           DEVICE=$(xcrun simctl list devices available -j | python3 -c "import sys,json; devs=[d['name'] for r in json.load(sys.stdin)['devices'].values() for d in r if d['isAvailable'] and 'iPhone' in d['name']]; print(devs[0] if devs else 'iPhone 16 Pro')")
+          echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
           xcodebuild build \
             -project Slabr/Slabr.xcodeproj \
             -scheme Slabr \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -40,11 +45,10 @@ jobs:
 
       - name: Test
         run: |
-          DEVICE=$(xcrun simctl list devices available -j | python3 -c "import sys,json; devs=[d['name'] for r in json.load(sys.stdin)['devices'].values() for d in r if d['isAvailable'] and 'iPhone' in d['name']]; print(devs[0] if devs else 'iPhone 16 Pro')")
           xcodebuild test \
             -project Slabr/Slabr.xcodeproj \
             -scheme Slabr \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
             -configuration Debug \
             -resultBundlePath TestResults \
             -enableCodeCoverage YES \

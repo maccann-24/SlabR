@@ -5,11 +5,18 @@ opt_in_rules:
   - force_unwrapping       # no force unwraps ever
   - empty_string
   - literal_expression_end_indentation
+  - closure_body_length
+  - function_body_length
+  - unowned_variable_capture
+
+analyzer_rules:
+  - unused_import
 
 excluded:
   - Pods
   - DerivedData
   - .build
+  - Recall
 
 line_length:
   warning: 120
@@ -22,6 +29,14 @@ type_body_length:
 file_length:
   warning: 400
   error: 600
+
+closure_body_length:
+  warning: 30
+  error: 70
+
+function_body_length:
+  warning: 100
+  error: 200
 
 force_cast: error
 force_try: error
