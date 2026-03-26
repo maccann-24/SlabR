@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// Metric tile for the Dashboard 2×2 grid. Displays a large number + label
-/// with an optional trend indicator. Uses 20pt corner radius per the action tile spec.
+/// Metric tile for the Dashboard grid. Displays a large number + label
+/// with an optional trend indicator. Default 16pt radius for stat tiles;
+/// use 20pt radius + tileColor for action tiles.
 struct StatCard: View {
     let value: String
     let label: String
     var trendText: String? = nil
     var trendColor: Color = .positive
     var tileColor: Color = .cardSurface
+    var cornerRadius: CGFloat = 16
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -28,6 +30,6 @@ struct StatCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.cardPadding)
         .background(tileColor)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }
 }

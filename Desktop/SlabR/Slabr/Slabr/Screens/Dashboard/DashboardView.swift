@@ -35,6 +35,7 @@ struct DashboardView: View {
                     .padding(.horizontal, Spacing.screenMargin)
                 } else {
                     VStack(spacing: Spacing.lg) {
+                        heroSection
                         statGrid
                         recentActivitySection
                     }
@@ -51,30 +52,31 @@ struct DashboardView: View {
         }
     }
 
+    // MARK: - Hero Section
+
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text(viewModel.formattedListedValue)
+                .font(.heroNumber)
+                .foregroundColor(.labelPrimary)
+            Text(viewModel.activeCount > 0 ? "Listed value · \(viewModel.activeCount) active" : "Listed value")
+                .font(.metricLabel)
+                .foregroundColor(.labelSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.cardPadding)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
     // MARK: - Stat Grid
 
     private var statGrid: some View {
         LazyVGrid(columns: columns, spacing: Spacing.cardGap) {
-            StatCard(
-                value: "\(viewModel.totalCards)",
-                label: "Inventory",
-                tileColor: .tilePSA
-            )
-            StatCard(
-                value: viewModel.formattedListedValue,
-                label: "Listed Value",
-                tileColor: .tileListings
-            )
-            StatCard(
-                value: "\(viewModel.draftCount)",
-                label: "Drafts",
-                tileColor: .tileCamera
-            )
-            StatCard(
-                value: "\(viewModel.activeCount)",
-                label: "Active",
-                tileColor: .tileAnalytics
-            )
+            StatCard(value: "\(viewModel.totalCards)", label: "Inventory")
+            StatCard(value: "\(viewModel.draftCount)", label: "Drafts")
+            StatCard(value: "\(viewModel.activeCount)", label: "Active")
+            StatCard(value: "\(viewModel.gradedCount)", label: "Graded")
         }
     }
 

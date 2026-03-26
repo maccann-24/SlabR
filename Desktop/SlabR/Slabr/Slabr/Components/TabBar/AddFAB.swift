@@ -11,7 +11,7 @@ struct AddFAB: View {
             HapticManager.shared.buttonTapped()
             onTap()
         } label: {
-            Image(systemName: "plus")
+            Image(systemName: "camera.fill")
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(width: 52, height: 52)
@@ -24,6 +24,6 @@ struct AddFAB: View {
         .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
-        .accessibilityLabel("Add new listing")
+        .accessibilityLabel("Scan a card")
     }
 }
