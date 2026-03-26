@@ -5,6 +5,7 @@ import UIKit
 final class MockCameraService: CameraServiceProtocol {
     var onCertDetected: (@MainActor @Sendable (String) -> Void)?
     var onCardTypeDetected: (@MainActor @Sendable (CardScanType) -> Void)?
+    var capturePhotoResult: UIImage? = nil
     var startCallCount = 0
     var stopCallCount = 0
     var resumeCallCount = 0
@@ -24,7 +25,7 @@ final class MockCameraService: CameraServiceProtocol {
     func toggleTorch() {}
 
     func capturePhoto() async -> UIImage? {
-        nil
+        capturePhotoResult
     }
 
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer {

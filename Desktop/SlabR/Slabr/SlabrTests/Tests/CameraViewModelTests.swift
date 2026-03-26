@@ -112,4 +112,43 @@ final class CameraViewModelTests: XCTestCase {
         XCTAssertEqual(vm.state, .detecting)
         XCTAssertEqual(mockCamera.resumeCallCount, 1)
     }
+
+    // MARK: - Async State Transitions
+
+    func testConfirmLookupTransitionsToLookingUp() {
+        let (vm, _, _) = makeVM()
+        vm.state = .detected("12345678")
+        vm.confirmLookup()
+        XCTAssertEqual(vm.state, .lookingUp("12345678"))
+    }
+
+    func testLookupSuccessTransitionsToFound() async throws {
+        let (vm, _, mockPSA) = makeVM()
+        mockPSA.lookupResult = .success(MockData.psaCard)
+        vm.state = .detected("12345678")
+        vm.confirmLookup()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .found(MockData.psaCard))
+    }
+
+    func testSaveDraftTransitionsToSaved() async throws {
+        let (vm, _, mockPSA) = makeVM()
+        mockPSA.lookupResult = .success(MockData.psaCard)
+        vm.state = .detected("12345678")
+        vm.confirmLookup()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .found(MockData.psaCard))
+        vm.saveDraft(card: MockData.psaCard)
+        XCTAssertEqual(vm.state, .saved)
+    }
+
+    func testCaptureRawPhotoSetsRawCaptured() async throws {
+        let (vm, mockCamera, _) = makeVM()
+        mockCamera.capturePhotoResult = UIImage()
+        vm.state = .rawReady
+        vm.captureRawPhoto()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .rawCaptured)
+        XCTAssertNotNil(vm.capturedImage)
+    }
 }

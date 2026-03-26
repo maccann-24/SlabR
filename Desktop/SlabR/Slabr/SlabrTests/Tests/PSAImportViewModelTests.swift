@@ -65,4 +65,72 @@ final class PSAImportViewModelTests: XCTestCase {
         // Should transition to lookingUp (synchronous part)
         XCTAssertEqual(vm.state, .lookingUp(certNumber: "12345678"))
     }
+
+    // MARK: - Async State Transitions
+
+    func testLookupFoundTransitionsToFound() async throws {
+        let mock = MockPSAService()
+        mock.lookupResult = .success(MockData.psaCard)
+        let vm = PSAImportViewModel(
+            psaService: mock,
+            extractCertNumber: { _ in "12345678" }
+        )
+        let context = TestCoreDataStack.makeContext()
+        vm.configure(context: context, userId: "test")
+        vm.manualCertNumber = "12345678"
+        vm.submitManualCert()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .found(MockData.psaCard))
+    }
+
+    func testLookupNotFoundTransitionsToNotFound() async throws {
+        let mock = MockPSAService()
+        mock.lookupResult = .failure(PSAServiceError.certNotFound)
+        let vm = PSAImportViewModel(
+            psaService: mock,
+            extractCertNumber: { _ in "12345678" }
+        )
+        let context = TestCoreDataStack.makeContext()
+        vm.configure(context: context, userId: "test")
+        vm.manualCertNumber = "12345678"
+        vm.submitManualCert()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .notFound(certNumber: "12345678"))
+    }
+
+    func testLookupErrorTransitionsToError() async throws {
+        let mock = MockPSAService()
+        mock.lookupResult = .failure(PSAServiceError.serverError(500))
+        let vm = PSAImportViewModel(
+            psaService: mock,
+            extractCertNumber: { _ in "12345678" }
+        )
+        let context = TestCoreDataStack.makeContext()
+        vm.configure(context: context, userId: "test")
+        vm.manualCertNumber = "12345678"
+        vm.submitManualCert()
+        try await Task.sleep(for: .milliseconds(200))
+        if case .error = vm.state {
+            // Expected error state
+        } else {
+            XCTFail("Expected error state, got \(vm.state)")
+        }
+    }
+
+    func testSaveDraftTransitionsToSaved() async throws {
+        let mock = MockPSAService()
+        mock.lookupResult = .success(MockData.psaCard)
+        let vm = PSAImportViewModel(
+            psaService: mock,
+            extractCertNumber: { _ in "12345678" }
+        )
+        let context = TestCoreDataStack.makeContext()
+        vm.configure(context: context, userId: "test")
+        vm.manualCertNumber = "12345678"
+        vm.submitManualCert()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(vm.state, .found(MockData.psaCard))
+        vm.saveDraft(card: MockData.psaCard)
+        XCTAssertEqual(vm.state, .saved)
+    }
 }

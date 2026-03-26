@@ -93,4 +93,34 @@ final class AnalyticsViewModelTests: XCTestCase {
             XCTAssertTrue(content?.contains("Date,Player") ?? false)
         }
     }
+
+    // MARK: - Populated Data Tests
+
+    func testLoadWithDataSetsHasDataTrue() {
+        let vm = makeVM(with: [
+            (grade: "10", brand: "Topps", price: 50, status: "draft", entryPoint: "psa"),
+            (grade: "9", brand: "Panini", price: 30, status: "listed", entryPoint: "camera"),
+        ])
+        XCTAssertTrue(vm.hasData)
+    }
+
+    func testCSVExportContainsAllColumns() {
+        let vm = makeVM(with: [
+            (grade: "10", brand: "Topps", price: 99.99, status: "listed", entryPoint: "psa"),
+            (grade: "9", brand: "Panini", price: 49.99, status: "draft", entryPoint: "camera"),
+        ])
+        let url = vm.exportCSV()
+        XCTAssertNotNil(url)
+        guard let url else { return }
+        let content = (try? String(contentsOf: url)) ?? ""
+        let lines = content.components(separatedBy: "\n")
+        let header = lines.first ?? ""
+        let expectedColumns = ["Date", "Player", "Year", "Brand", "Set", "Grade", "Cert", "Price", "Status", "Source"]
+        for column in expectedColumns {
+            XCTAssertTrue(header.contains(column), "CSV header missing column: \(column)")
+        }
+        // Verify we have data rows (header + 2 listings + trailing newline)
+        let dataLines = lines.filter { !$0.isEmpty }
+        XCTAssertEqual(dataLines.count, 3, "Expected header + 2 data rows")
+    }
 }

@@ -20,7 +20,8 @@ enum TestCoreDataStack {
         title: String? = nil,
         status: String = RecordStatus.draft.rawValue,
         userId: String = "test-user",
-        thumbnailData: Data? = nil
+        thumbnailData: Data? = nil,
+        entryPoint: String = "psa"
     ) -> ListingRecord {
         let card = CardRecord(context: context)
         card.id = UUID()
@@ -40,7 +41,7 @@ enum TestCoreDataStack {
         listing.id = UUID()
         listing.date = .now
         listing.userId = userId
-        listing.entryPoint = "psa"
+        listing.entryPoint = entryPoint
         listing.status = status
         listing.card = card
         if let price { listing.listingPrice = price as NSDecimalNumber }
