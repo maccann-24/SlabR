@@ -6,7 +6,7 @@ struct AnalyticsView: View {
     @Environment(\.managedObjectContext) private var context
     @StateObject private var viewModel = AnalyticsViewModel()
     @State private var showUpgradeSheet = false
-    @State private var csvURL: URL?
+
 
     var body: some View {
         ScrollView {
@@ -138,7 +138,6 @@ struct AnalyticsView: View {
         Button {
             if AccessControl.hasAccess(userId: appState.userId, feature: .analyticsExport) {
                 if let url = viewModel.exportCSV() {
-                    csvURL = url
                     presentShareSheet(url: url)
                 }
             } else {

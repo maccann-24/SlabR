@@ -7,7 +7,7 @@ final class HapticManager {
     private let light = UIImpactFeedbackGenerator(style: .light)
     private let medium = UIImpactFeedbackGenerator(style: .medium)
     private let notification = UINotificationFeedbackGenerator()
-    private let selection = UISelectionFeedbackGenerator()
+
 
     func imageSelected() {
         light.impactOccurred()

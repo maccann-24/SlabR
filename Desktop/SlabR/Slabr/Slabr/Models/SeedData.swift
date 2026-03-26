@@ -179,7 +179,7 @@ enum SeedData {
         settings.defaultFormat = "fixedPrice"
         settings.returnsAccepted = true
         settings.returnPeriodDays = 30
-        settings.conditionGuideEnabled = true
+
 
         do {
             try context.save()
