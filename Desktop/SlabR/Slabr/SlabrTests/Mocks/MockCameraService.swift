@@ -3,8 +3,8 @@ import UIKit
 @testable import Slabr
 
 final class MockCameraService: CameraServiceProtocol {
-    var onCertDetected: ((String) -> Void)?
-    var onCardTypeDetected: ((CardScanType) -> Void)?
+    var onCertDetected: (@MainActor @Sendable (String) -> Void)?
+    var onCardTypeDetected: (@MainActor @Sendable (CardScanType) -> Void)?
     var startCallCount = 0
     var stopCallCount = 0
     var resumeCallCount = 0
@@ -33,11 +33,11 @@ final class MockCameraService: CameraServiceProtocol {
 
     // MARK: - Test Helpers
 
-    func simulateDetection(_ cert: String) {
+    @MainActor func simulateDetection(_ cert: String) {
         onCertDetected?(cert)
     }
 
-    func simulateCardTypeDetection(_ type: CardScanType) {
+    @MainActor func simulateCardTypeDetection(_ type: CardScanType) {
         onCardTypeDetected?(type)
     }
 }

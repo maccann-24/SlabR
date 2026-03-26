@@ -35,7 +35,13 @@ final class ListingBuilderViewModel: ObservableObject {
 
     private let listing: ListingRecord
     private let ebayService: EbayServiceProtocol
-    private var context: NSManagedObjectContext { listing.managedObjectContext! }
+    private var context: NSManagedObjectContext {
+        guard let ctx = listing.managedObjectContext else {
+            Log.builder.fault("ListingRecord has no managedObjectContext")
+            return PersistenceController.shared.container.viewContext
+        }
+        return ctx
+    }
     var recordUserId: String { listing.userId ?? "" }
 
     /// True if this is a raw (ungraded) card — shows condition selector, hides PSA fields.

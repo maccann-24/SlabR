@@ -41,7 +41,7 @@ final class PSAService {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let body = "grant_type=password&username=\(urlEncode(username))&password=\(urlEncode(password))"
+        let body = "grant_type=password&username=\(try urlEncode(username))&password=\(try urlEncode(password))"
         request.httpBody = body.data(using: .utf8)
 
         let data: Data
@@ -81,7 +81,7 @@ final class PSAService {
             throw PSAServiceError.notAuthenticated
         }
 
-        let encodedCert = urlEncode(certNumber)
+        let encodedCert = try urlEncode(certNumber)
         guard let url = URL(string: "\(baseURL)/cert/GetByCertNumber/\(encodedCert)") else {
             throw PSAServiceError.serverError(0)
         }
@@ -148,11 +148,11 @@ final class PSAService {
     /// Percent-encodes a string using a restricted CharacterSet (alphanumerics + `-._~`).
     /// This is stricter than `.urlQueryAllowed` to prevent `&`, `=`, and `+` from passing
     /// through unencoded in OAuth form bodies — a security fix for CWE-116.
-    func urlEncode(_ string: String) -> String {
+    func urlEncode(_ string: String) throws -> String {
         let allowed = Self.urlEncodingAllowed
         guard let encoded = string.addingPercentEncoding(withAllowedCharacters: allowed) else {
-            Log.psa.error("URL encoding failed for input — sending unencoded (this should not happen)")
-            return string
+            Log.psa.error("URL encoding failed for input")
+            throw PSAServiceError.serverError(0)
         }
         return encoded
     }

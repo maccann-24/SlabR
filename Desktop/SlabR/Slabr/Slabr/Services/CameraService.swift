@@ -6,8 +6,8 @@ import Vision
 
 /// Protocol for camera hardware abstraction. Enables mock injection for ViewModel testing.
 protocol CameraServiceProtocol: AnyObject {
-    var onCertDetected: ((String) -> Void)? { get set }
-    var onCardTypeDetected: ((CardScanType) -> Void)? { get set }
+    var onCertDetected: (@MainActor @Sendable (String) -> Void)? { get set }
+    var onCardTypeDetected: (@MainActor @Sendable (CardScanType) -> Void)? { get set }
     func startSession()
     func stopSession()
     func resumeDetection()
@@ -20,8 +20,8 @@ protocol CameraServiceProtocol: AnyObject {
 /// throttled to ~2fps, and calls back when an 8-digit cert number is detected.
 /// Also performs card type detection (PSA slab vs raw card) via color heuristic.
 final class CameraService: NSObject, CameraServiceProtocol {
-    var onCertDetected: ((String) -> Void)?
-    var onCardTypeDetected: ((CardScanType) -> Void)?
+    var onCertDetected: (@MainActor @Sendable (String) -> Void)?
+    var onCardTypeDetected: (@MainActor @Sendable (CardScanType) -> Void)?
 
     private let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
@@ -205,7 +205,7 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
             }
 
             if let resolved = resolvedType {
-                DispatchQueue.main.async { [weak self] in
+                Task { @MainActor [weak self] in
                     self?.onCardTypeDetected?(resolved)
                 }
             }
@@ -218,7 +218,7 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
             do {
                 if let cert = try await VisionService.extractCertNumber(from: cgImage) {
                     self?.isDetectionPaused.withLock { $0 = true }
-                    DispatchQueue.main.async { [weak self] in
+                    Task { @MainActor [weak self] in
                         self?.onCertDetected?(cert)
                     }
                 }

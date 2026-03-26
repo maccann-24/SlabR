@@ -31,24 +31,6 @@ final class CameraViewModel: ObservableObject {
         case error(String)
         case manualEntry
         case saved
-
-        static func == (lhs: CameraState, rhs: CameraState) -> Bool {
-            switch (lhs, rhs) {
-            case (.detecting, .detecting): return true
-            case (.detectedType(let a), .detectedType(let b)): return a == b
-            case (.scanning, .scanning): return true
-            case (.detected(let a), .detected(let b)): return a == b
-            case (.lookingUp(let a), .lookingUp(let b)): return a == b
-            case (.found(let a), .found(let b)): return a == b
-            case (.rawReady, .rawReady): return true
-            case (.rawCaptured, .rawCaptured): return true
-            case (.notFound(let a), .notFound(let b)): return a == b
-            case (.error(let a), .error(let b)): return a == b
-            case (.manualEntry, .manualEntry): return true
-            case (.saved, .saved): return true
-            default: return false
-            }
-        }
     }
 
     @Published var state: CameraState = .detecting
