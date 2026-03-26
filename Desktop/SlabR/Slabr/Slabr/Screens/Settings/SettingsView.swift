@@ -15,36 +15,7 @@ struct SettingsView: View {
                     .foregroundColor(.labelPrimary)
                     .padding(.horizontal, Spacing.screenMargin)
 
-                VStack(spacing: Spacing.cardGap) {
-                    // Trial status
-                    trialStatusRow
-
-                    NavigationLink {
-                        ListingDefaultsView(
-                            viewModel: ListingDefaultsViewModel(context: context, userId: appState.userId)
-                        )
-                    } label: {
-                        settingsRow(icon: "tag.fill", title: "Listing defaults")
-                    }
-
-                    NavigationLink {
-                        ShippingProfilesView(
-                            viewModel: ShippingProfilesViewModel(context: context, userId: appState.userId)
-                        )
-                    } label: {
-                        settingsRow(icon: "shippingbox.fill", title: "Shipping profiles")
-                    }
-
-                    settingsRow(icon: "link", title: "eBay account")
-                    settingsRow(icon: "person.crop.circle", title: "PSA account")
-
-                    sellerModeRow
-
-                    #if DEBUG
-                    debugSection
-                    #endif
-                }
-                .padding(.horizontal, Spacing.screenMargin)
+                settingsRows
             }
             .padding(.top, Spacing.md)
         }
@@ -58,6 +29,40 @@ struct SettingsView: View {
             UpgradeSheet(feature: feature)
                 .presentationDetents([.medium])
         }
+    }
+
+    // MARK: - Settings Rows List
+
+    private var settingsRows: some View {
+        VStack(spacing: Spacing.cardGap) {
+            trialStatusRow
+
+            NavigationLink {
+                ListingDefaultsView(
+                    viewModel: ListingDefaultsViewModel(context: context, userId: appState.userId)
+                )
+            } label: {
+                settingsRow(icon: "tag.fill", title: "Listing defaults")
+            }
+
+            NavigationLink {
+                ShippingProfilesView(
+                    viewModel: ShippingProfilesViewModel(context: context, userId: appState.userId)
+                )
+            } label: {
+                settingsRow(icon: "shippingbox.fill", title: "Shipping profiles")
+            }
+
+            settingsRow(icon: "link", title: "eBay account")
+            settingsRow(icon: "person.crop.circle", title: "PSA account")
+
+            sellerModeRow
+
+            #if DEBUG
+            debugSection
+            #endif
+        }
+        .padding(.horizontal, Spacing.screenMargin)
     }
 
     // MARK: - Trial Status

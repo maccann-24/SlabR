@@ -16,7 +16,25 @@ struct OnboardingCameraStep: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
+            cameraHeroSection
+            permissionDeniedSection
+            Spacer()
+            cameraActions
+        }
+        .onAppear { appeared = true }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraView(onDismissWithRecord: { record in
+                onScanComplete(record)
+            })
+            .environment(\.managedObjectContext, context)
+            .environmentObject(appState)
+        }
+    }
 
+    // MARK: - Subviews
+
+    private var cameraHeroSection: some View {
+        VStack(spacing: 0) {
             ZStack {
                 RadialGradient(
                     colors: [Color.brandAccent.opacity(0.12), Color.clear],
@@ -48,50 +66,45 @@ struct OnboardingCameraStep: View {
                 .padding(.top, Spacing.sm)
                 .opacity(appeared ? 1 : 0)
                 .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.3), value: appeared)
+        }
+    }
 
-            if permissionDenied {
-                VStack(spacing: Spacing.sm) {
-                    Text("Camera access is needed to scan cards.")
-                        .font(.cardMeta)
-                        .foregroundColor(.labelSecondary)
-                        .multilineTextAlignment(.center)
-
-                    Button("Open Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                    .font(.cardTitle)
-                    .foregroundColor(.brandAccent)
-                }
-                .padding(.top, Spacing.lg)
-                .transition(.opacity)
-            }
-
-            Spacer()
-
+    @ViewBuilder
+    private var permissionDeniedSection: some View {
+        if permissionDenied {
             VStack(spacing: Spacing.sm) {
-                PrimaryButton("Ready to scan") {
-                    requestCameraAndOpen()
-                }
-
-                Button("Skip for now") { onSkip() }
+                Text("Camera access is needed to scan cards.")
                     .font(.cardMeta)
                     .foregroundColor(.labelSecondary)
+                    .multilineTextAlignment(.center)
+
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .font(.cardTitle)
+                .foregroundColor(.brandAccent)
             }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.bottom, Spacing.xl)
-            .opacity(appeared ? 1 : 0)
-            .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.4), value: appeared)
+            .padding(.top, Spacing.lg)
+            .transition(.opacity)
         }
-        .onAppear { appeared = true }
-        .fullScreenCover(isPresented: $showCamera) {
-            CameraView(onDismissWithRecord: { record in
-                onScanComplete(record)
-            })
-            .environment(\.managedObjectContext, context)
-            .environmentObject(appState)
+    }
+
+    private var cameraActions: some View {
+        VStack(spacing: Spacing.sm) {
+            PrimaryButton("Ready to scan") {
+                requestCameraAndOpen()
+            }
+
+            Button("Skip for now") { onSkip() }
+                .font(.cardMeta)
+                .foregroundColor(.labelSecondary)
         }
+        .padding(.horizontal, Spacing.screenMargin)
+        .padding(.bottom, Spacing.xl)
+        .opacity(appeared ? 1 : 0)
+        .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.4), value: appeared)
     }
 
     private func requestCameraAndOpen() {

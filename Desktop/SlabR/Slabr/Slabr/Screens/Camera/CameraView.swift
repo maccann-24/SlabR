@@ -95,34 +95,58 @@ struct CameraView: View {
         label: String, showScanLine: Bool = false
     ) -> some View {
         GeometryReader { geo in
+            let centerX = geo.size.width / 2
             let frameY = geo.size.height * yFraction
+            let left = centerX - width / 2
+            let right = centerX + width / 2
+            let top = frameY - height / 2
+            let bottom = frameY + height / 2
 
-            ZStack {
-                Color.black.opacity(0.4).ignoresSafeArea()
-                RoundedRectangle(cornerRadius: 16)
-                    .frame(width: width, height: height)
-                    .position(x: geo.size.width / 2, y: frameY)
-                    .blendMode(.destinationOut)
-            }
-            .compositingGroup()
-
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.brandAccent.opacity(0.6), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-                .frame(width: width, height: height)
-                .position(x: geo.size.width / 2, y: frameY)
+            guideCutout(width: width, height: height, centerX: centerX, frameY: frameY)
+            guideCornerMarks(left: left, right: right, top: top, bottom: bottom)
 
             if showScanLine {
                 Rectangle()
-                    .fill(Color.brandAccent.opacity(0.3))
+                    .fill(Color.white.opacity(0.3))
                     .frame(width: width - 16, height: 2)
-                    .position(x: geo.size.width / 2, y: frameY - height / 2 + scanLineOffset)
+                    .position(x: centerX, y: top + scanLineOffset)
             }
 
             Text(label)
                 .font(.cardMeta)
                 .foregroundColor(.white.opacity(0.8))
-                .position(x: geo.size.width / 2, y: frameY + height / 2 + 24)
+                .position(x: centerX, y: bottom + 24)
         }
+    }
+
+    private func guideCutout(width: CGFloat, height: CGFloat, centerX: CGFloat, frameY: CGFloat) -> some View {
+        ZStack {
+            Color.black.opacity(0.4).ignoresSafeArea()
+            RoundedRectangle(cornerRadius: 4)
+                .frame(width: width, height: height)
+                .position(x: centerX, y: frameY)
+                .blendMode(.destinationOut)
+        }
+        .compositingGroup()
+    }
+
+    private func guideCornerMarks(left: CGFloat, right: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
+        let arm: CGFloat = 24
+        return Path { path in
+            path.move(to: CGPoint(x: left, y: top + arm))
+            path.addLine(to: CGPoint(x: left, y: top))
+            path.addLine(to: CGPoint(x: left + arm, y: top))
+            path.move(to: CGPoint(x: right - arm, y: top))
+            path.addLine(to: CGPoint(x: right, y: top))
+            path.addLine(to: CGPoint(x: right, y: top + arm))
+            path.move(to: CGPoint(x: right, y: bottom - arm))
+            path.addLine(to: CGPoint(x: right, y: bottom))
+            path.addLine(to: CGPoint(x: right - arm, y: bottom))
+            path.move(to: CGPoint(x: left + arm, y: bottom))
+            path.addLine(to: CGPoint(x: left, y: bottom))
+            path.addLine(to: CGPoint(x: left, y: bottom - arm))
+        }
+        .stroke(Color.white, lineWidth: 3)
     }
 
     private var psaGuideOverlay: some View {

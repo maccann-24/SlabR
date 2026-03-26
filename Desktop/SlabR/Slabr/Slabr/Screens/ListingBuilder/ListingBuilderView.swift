@@ -222,49 +222,59 @@ struct ListingBuilderView: View {
 
     private var cardDetailsSection: some View {
         CardSection(title: "Card details") {
-            VStack(spacing: Spacing.sm) {
-                DetailRow(label: "Player", value: viewModel.playerName)
+            cardDetailRows
+        }
+    }
 
-                if !viewModel.year.isEmpty {
-                    DetailRow(label: "Year", value: viewModel.year)
-                }
+    @ViewBuilder
+    private var cardDetailRows: some View {
+        VStack(spacing: Spacing.sm) {
+            DetailRow(label: "Player", value: viewModel.playerName)
 
-                if !viewModel.brand.isEmpty {
-                    DetailRow(label: "Brand", value: viewModel.brand)
-                }
-
-                if !viewModel.setName.isEmpty {
-                    DetailRow(label: "Set", value: viewModel.setName)
-                }
-
-                if !viewModel.cardNumber.isEmpty {
-                    DetailRow(label: "Card number", value: viewModel.cardNumber)
-                }
-
-                if let parallel = viewModel.parallel, !parallel.isEmpty {
-                    DetailRow(label: "Parallel", value: parallel)
-                }
-
-                if let grade = viewModel.grade, !grade.isEmpty {
-                    DetailRow(label: "Grade", value: "PSA \(grade)")
-                }
-
-                if let cert = viewModel.certNumber, !cert.isEmpty {
-                    DetailRow(label: "Cert", value: cert)
-                }
-
-                if viewModel.isRookie {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.brandAccent)
-                            .font(.caption)
-                        Text("Rookie")
-                            .font(.captionMedium)
-                            .foregroundColor(.brandAccent)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
+            if !viewModel.year.isEmpty {
+                DetailRow(label: "Year", value: viewModel.year)
             }
+
+            if !viewModel.brand.isEmpty {
+                DetailRow(label: "Brand", value: viewModel.brand)
+            }
+
+            if !viewModel.setName.isEmpty {
+                DetailRow(label: "Set", value: viewModel.setName)
+            }
+
+            if !viewModel.cardNumber.isEmpty {
+                DetailRow(label: "Card number", value: viewModel.cardNumber)
+            }
+
+            if let parallel = viewModel.parallel, !parallel.isEmpty {
+                DetailRow(label: "Parallel", value: parallel)
+            }
+
+            if let grade = viewModel.grade, !grade.isEmpty {
+                DetailRow(label: "Grade", value: "PSA \(grade)")
+            }
+
+            if let cert = viewModel.certNumber, !cert.isEmpty {
+                DetailRow(label: "Cert", value: cert)
+            }
+
+            rookieBadge
+        }
+    }
+
+    @ViewBuilder
+    private var rookieBadge: some View {
+        if viewModel.isRookie {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.brandAccent)
+                    .font(.caption)
+                Text("Rookie")
+                    .font(.captionMedium)
+                    .foregroundColor(.brandAccent)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

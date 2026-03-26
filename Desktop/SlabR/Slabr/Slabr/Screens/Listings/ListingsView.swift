@@ -14,39 +14,7 @@ struct ListingsView: View {
                     .foregroundColor(.labelPrimary)
                     .padding(.horizontal, Spacing.screenMargin)
 
-                if viewModel.drafts.isEmpty && viewModel.listed.isEmpty {
-                    EmptyState(
-                        icon: "list.bullet.rectangle",
-                        title: "No listings yet",
-                        message: "Your active and draft listings will appear here.",
-                        ctaTitle: "Import a card",
-                        ctaAction: { appState.showEntryPointSheet = true }
-                    )
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, Spacing.screenMargin)
-                } else {
-                    VStack(spacing: Spacing.cardGap) {
-                        if !viewModel.drafts.isEmpty {
-                            sectionHeader("Drafts")
-                            ForEach(viewModel.drafts) { record in
-                                Button {
-                                    selectedRecord = record
-                                } label: {
-                                    ListingRow(listing: record, isDraft: true)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        if !viewModel.listed.isEmpty {
-                            sectionHeader("Listed")
-                            ForEach(viewModel.listed) { record in
-                                ListingRow(listing: record, isDraft: false)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, Spacing.screenMargin)
-                }
+                listingsContent
             }
             .padding(.top, Spacing.md)
         }
@@ -62,6 +30,49 @@ struct ListingsView: View {
                 .presentationDetents([.large])
                 .onDisappear { viewModel.load() }
         }
+    }
+
+    // MARK: - Content
+
+    @ViewBuilder
+    private var listingsContent: some View {
+        if viewModel.drafts.isEmpty && viewModel.listed.isEmpty {
+            EmptyState(
+                icon: "list.bullet.rectangle",
+                title: "No listings yet",
+                message: "Your active and draft listings will appear here.",
+                ctaTitle: "Import a card",
+                ctaAction: { appState.showEntryPointSheet = true }
+            )
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Spacing.screenMargin)
+        } else {
+            listingSections
+        }
+    }
+
+    private var listingSections: some View {
+        VStack(spacing: Spacing.cardGap) {
+            if !viewModel.drafts.isEmpty {
+                sectionHeader("Drafts")
+                ForEach(viewModel.drafts) { record in
+                    Button {
+                        selectedRecord = record
+                    } label: {
+                        ListingRow(listing: record, isDraft: true)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if !viewModel.listed.isEmpty {
+                sectionHeader("Listed")
+                ForEach(viewModel.listed) { record in
+                    ListingRow(listing: record, isDraft: false)
+                }
+            }
+        }
+        .padding(.horizontal, Spacing.screenMargin)
     }
 
     private func sectionHeader(_ title: String) -> some View {

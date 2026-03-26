@@ -10,45 +10,58 @@ struct ConditionSelector: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack {
-                Text("Condition")
-                    .font(.cardTitle)
-                    .foregroundColor(.labelPrimary)
-                if showGuideButton {
-                    Button {
-                        onGuideRequested?()
-                    } label: {
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.brandAccent)
-                            .font(.body)
-                    }
-                    .accessibilityLabel("Condition guide")
-                    .accessibilityHint("Shows descriptions of each condition grade")
-                }
-                Spacer()
-            }
+            conditionHeader
+            conditionChips
+            conditionWarning
+        }
+    }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.sm) {
-                    ForEach(CardCondition.allCases) { condition in
-                        FilterChip(
-                            title: condition.shortName,
-                            isSelected: selectedCondition == condition
-                        ) {
-                            selectedCondition = condition
-                        }
-                        .accessibilityLabel(condition.rawValue)
-                        .accessibilityAddTraits(selectedCondition == condition ? .isSelected : [])
-                    }
-                }
-                .padding(.horizontal, Spacing.xs)
-            }
+    // MARK: - Subviews
 
-            if selectedCondition == nil {
-                Text("Select condition before posting")
-                    .font(.caption)
-                    .foregroundColor(.negative)
+    private var conditionHeader: some View {
+        HStack {
+            Text("Condition")
+                .font(.cardTitle)
+                .foregroundColor(.labelPrimary)
+            if showGuideButton {
+                Button {
+                    onGuideRequested?()
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(.brandAccent)
+                        .font(.body)
+                }
+                .accessibilityLabel("Condition guide")
+                .accessibilityHint("Shows descriptions of each condition grade")
             }
+            Spacer()
+        }
+    }
+
+    private var conditionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.sm) {
+                ForEach(CardCondition.allCases) { condition in
+                    FilterChip(
+                        title: condition.shortName,
+                        isSelected: selectedCondition == condition
+                    ) {
+                        selectedCondition = condition
+                    }
+                    .accessibilityLabel(condition.rawValue)
+                    .accessibilityAddTraits(selectedCondition == condition ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, Spacing.xs)
+        }
+    }
+
+    @ViewBuilder
+    private var conditionWarning: some View {
+        if selectedCondition == nil {
+            Text("Select condition before posting")
+                .font(.caption)
+                .foregroundColor(.negative)
         }
     }
 }

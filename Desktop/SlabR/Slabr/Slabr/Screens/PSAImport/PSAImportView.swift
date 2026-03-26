@@ -16,78 +16,7 @@ struct PSAImportView: View {
                 .font(.sectionHeader)
                 .foregroundColor(.labelPrimary)
 
-            switch viewModel.state {
-            case .idle, .pickingImage:
-                Spacer()
-
-            case .extracting:
-                Spacer()
-                ProgressView("Reading cert number...")
-                Spacer()
-
-            case .lookingUp(let cert):
-                Spacer()
-                ProgressView("Looking up \(cert)...")
-                Spacer()
-
-            case .needsManualCert:
-                manualCertView
-                Spacer()
-
-            case .needsCredentials:
-                credentialForm
-                Spacer()
-
-            case .found(let card):
-                ScrollView {
-                    VStack(spacing: Spacing.lg) {
-                        PSACardDetailView(card: card)
-                        PrimaryButton("Save as draft") {
-                            viewModel.saveDraft(card: card)
-                        }
-                    }
-                    .padding(.horizontal, Spacing.screenMargin)
-                }
-
-            case .notFound(let cert):
-                Spacer()
-                EmptyState(
-                    icon: "magnifyingglass",
-                    title: "Cert not found",
-                    message: "No results for \(cert) in the PSA database."
-                )
-                PrimaryButton("Try again") { viewModel.retry() }
-                    .padding(.horizontal, Spacing.screenMargin)
-                Spacer()
-
-            case .error(let msg):
-                Spacer()
-                EmptyState(
-                    icon: "exclamationmark.triangle",
-                    title: "Something went wrong",
-                    message: msg
-                )
-                PrimaryButton("Try again") { viewModel.retry() }
-                    .padding(.horizontal, Spacing.screenMargin)
-                Spacer()
-
-            case .saved:
-                Spacer()
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.brandAccent)
-                Text("Draft saved")
-                    .font(.cardTitle)
-                    .foregroundColor(.labelPrimary)
-                Spacer()
-                VStack(spacing: Spacing.sm) {
-                    PrimaryButton("Continue to listing") { showListingBuilder = true }
-                    Button("Done") { dismiss() }
-                        .font(.cardMeta)
-                        .foregroundColor(.labelSecondary)
-                }
-                .padding(.horizontal, Spacing.screenMargin)
-            }
+            stateContent
         }
         .padding(.top, Spacing.md)
         .background(Color.appBackground)
@@ -107,6 +36,106 @@ struct PSAImportView: View {
                     .environment(\.managedObjectContext, context)
                     .presentationDetents([.large])
             }
+        }
+    }
+
+    // MARK: - State Content
+
+    @ViewBuilder
+    private var stateContent: some View {
+        switch viewModel.state {
+        case .idle, .pickingImage:
+            Spacer()
+
+        case .extracting:
+            Spacer()
+            ProgressView("Reading cert number...")
+            Spacer()
+
+        case .lookingUp(let cert):
+            Spacer()
+            ProgressView("Looking up \(cert)...")
+            Spacer()
+
+        case .needsManualCert:
+            manualCertView
+            Spacer()
+
+        case .needsCredentials:
+            credentialForm
+            Spacer()
+
+        case .found(let card):
+            foundCardContent(card)
+
+        case .notFound(let cert):
+            notFoundContent(cert)
+
+        case .error(let msg):
+            errorContent(msg)
+
+        case .saved:
+            savedContent
+        }
+    }
+
+    private func foundCardContent(_ card: PSACard) -> some View {
+        ScrollView {
+            VStack(spacing: Spacing.lg) {
+                PSACardDetailView(card: card)
+                PrimaryButton("Save as draft") {
+                    viewModel.saveDraft(card: card)
+                }
+            }
+            .padding(.horizontal, Spacing.screenMargin)
+        }
+    }
+
+    private func notFoundContent(_ cert: String) -> some View {
+        VStack {
+            Spacer()
+            EmptyState(
+                icon: "magnifyingglass",
+                title: "Cert not found",
+                message: "No results for \(cert) in the PSA database."
+            )
+            PrimaryButton("Try again") { viewModel.retry() }
+                .padding(.horizontal, Spacing.screenMargin)
+            Spacer()
+        }
+    }
+
+    private func errorContent(_ msg: String) -> some View {
+        VStack {
+            Spacer()
+            EmptyState(
+                icon: "exclamationmark.triangle",
+                title: "Import failed",
+                message: msg
+            )
+            PrimaryButton("Try again") { viewModel.retry() }
+                .padding(.horizontal, Spacing.screenMargin)
+            Spacer()
+        }
+    }
+
+    private var savedContent: some View {
+        VStack {
+            Spacer()
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.brandAccent)
+            Text("Draft saved")
+                .font(.cardTitle)
+                .foregroundColor(.labelPrimary)
+            Spacer()
+            VStack(spacing: Spacing.sm) {
+                PrimaryButton("Continue to listing") { showListingBuilder = true }
+                Button("Done") { dismiss() }
+                    .font(.cardMeta)
+                    .foregroundColor(.labelSecondary)
+            }
+            .padding(.horizontal, Spacing.screenMargin)
         }
     }
 

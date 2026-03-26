@@ -12,7 +12,29 @@ struct OnboardingCompleteStep: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
+            completeHeroSection
+            Spacer().frame(height: Spacing.xl)
+            capabilitiesList
+            Spacer()
+            completeActions
+        }
+        .onAppear {
+            appeared = true
+            HapticManager.shared.postSuccess()
+            withAnimation(
+                reduceMotion
+                    ? .linear(duration: 0)
+                    : .spring(response: 0.6, dampingFraction: 0.6).delay(0.1)
+            ) {
+                checkmarkScale = 1.0
+            }
+        }
+    }
 
+    // MARK: - Subviews
+
+    private var completeHeroSection: some View {
+        VStack(spacing: 0) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 72))
                 .foregroundColor(.brandAccent)
@@ -37,48 +59,37 @@ struct OnboardingCompleteStep: View {
             .padding(.top, Spacing.md)
             .opacity(appeared ? 1 : 0)
             .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.4), value: appeared)
+        }
+    }
 
-            Spacer().frame(height: Spacing.xl)
+    private var capabilitiesList: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            capabilityRow(icon: "camera.fill", text: "Scan and identify cards instantly")
+            capabilityRow(icon: "doc.text.fill", text: "Create eBay-ready listings")
+            capabilityRow(icon: "chart.bar.fill", text: "Track your inventory and sales")
+        }
+        .padding(.horizontal, Spacing.xl)
+        .opacity(appeared ? 1 : 0)
+        .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.5), value: appeared)
+    }
 
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                capabilityRow(icon: "camera.fill", text: "Scan and identify cards instantly")
-                capabilityRow(icon: "doc.text.fill", text: "Create eBay-ready listings")
-                capabilityRow(icon: "chart.bar.fill", text: "Track your inventory and sales")
-            }
-            .padding(.horizontal, Spacing.xl)
-            .opacity(appeared ? 1 : 0)
-            .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.5), value: appeared)
-
-            Spacer()
-
-            VStack(spacing: Spacing.sm) {
-                if let record = scannedRecord {
-                    PrimaryButton("Continue to listing") {
-                        onContinueToListing(record)
-                    }
-                    Button("Go to dashboard") { onFinish() }
-                        .font(.cardMeta)
-                        .foregroundColor(.labelSecondary)
-                } else {
-                    PrimaryButton("Start listing", action: onFinish)
+    private var completeActions: some View {
+        VStack(spacing: Spacing.sm) {
+            if let record = scannedRecord {
+                PrimaryButton("Continue to listing") {
+                    onContinueToListing(record)
                 }
-            }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.bottom, Spacing.xl)
-            .opacity(appeared ? 1 : 0)
-            .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.6), value: appeared)
-        }
-        .onAppear {
-            appeared = true
-            HapticManager.shared.postSuccess()
-            withAnimation(
-                reduceMotion
-                    ? .linear(duration: 0)
-                    : .spring(response: 0.6, dampingFraction: 0.6).delay(0.1)
-            ) {
-                checkmarkScale = 1.0
+                Button("Go to dashboard") { onFinish() }
+                    .font(.cardMeta)
+                    .foregroundColor(.labelSecondary)
+            } else {
+                PrimaryButton("Start listing", action: onFinish)
             }
         }
+        .padding(.horizontal, Spacing.screenMargin)
+        .padding(.bottom, Spacing.xl)
+        .opacity(appeared ? 1 : 0)
+        .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.6), value: appeared)
     }
 
     private func capabilityRow(icon: String, text: String) -> some View {

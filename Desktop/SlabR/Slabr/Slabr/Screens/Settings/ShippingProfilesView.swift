@@ -125,74 +125,80 @@ struct ShippingProfilesView: View {
                 .font(.sectionHeader)
                 .foregroundColor(.labelPrimary)
 
-            VStack(spacing: Spacing.md) {
-                formField("Name") {
-                    TextField("e.g. Standard Shipping", text: $viewModel.formName)
-                        .font(.cardTitle)
-                        .foregroundColor(.labelPrimary)
-                }
-
-                formField("Service") {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(ShippingProfilesViewModel.services, id: \.self) { svc in
-                            FilterChip(title: svc, isSelected: viewModel.formService == svc) {
-                                viewModel.formService = svc
-                            }
-                        }
-                    }
-                }
-
-                formField("Handling time") {
-                    Stepper("\(viewModel.formHandlingDays) day\(viewModel.formHandlingDays == 1 ? "" : "s")",
-                            value: $viewModel.formHandlingDays, in: 1...5)
-                        .font(.cardTitle)
-                        .foregroundColor(.labelPrimary)
-                }
-
-                Toggle("Buyer pays shipping", isOn: $viewModel.formBuyerPays)
-                    .font(.cardTitle)
-                    .foregroundColor(.labelPrimary)
-                    .tint(.brandAccent)
-                    .padding(.horizontal, Spacing.cardPadding)
-
-                Toggle("Set as default", isOn: $viewModel.formIsDefault)
-                    .font(.cardTitle)
-                    .foregroundColor(.labelPrimary)
-                    .tint(.brandAccent)
-                    .padding(.horizontal, Spacing.cardPadding)
-            }
-
+            profileFormFields
             Spacer()
-
-            HStack(spacing: Spacing.md) {
-                if viewModel.editingProfile != nil {
-                    Button {
-                        if let profile = viewModel.editingProfile {
-                            viewModel.deleteProfile(profile)
-                            notifyDefaultChanged()
-                        }
-                        viewModel.showAddSheet = false
-                    } label: {
-                        Text("Delete")
-                            .font(.cardTitle)
-                            .foregroundColor(.negative)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.negative.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                    }
-                }
-                PrimaryButton("Save", isEnabled: !viewModel.formName.trimmingCharacters(in: .whitespaces).isEmpty) {
-                    viewModel.saveProfile()
-                    notifyDefaultChanged()
-                    viewModel.showAddSheet = false
-                }
-            }
-            .padding(.horizontal, Spacing.screenMargin)
+            profileFormActions
         }
         .padding(.top, Spacing.md)
         .padding(.bottom, Spacing.lg)
         .background(Color.appBackground)
+    }
+
+    private var profileFormFields: some View {
+        VStack(spacing: Spacing.md) {
+            formField("Name") {
+                TextField("e.g. Standard Shipping", text: $viewModel.formName)
+                    .font(.cardTitle)
+                    .foregroundColor(.labelPrimary)
+            }
+
+            formField("Service") {
+                HStack(spacing: Spacing.sm) {
+                    ForEach(ShippingProfilesViewModel.services, id: \.self) { svc in
+                        FilterChip(title: svc, isSelected: viewModel.formService == svc) {
+                            viewModel.formService = svc
+                        }
+                    }
+                }
+            }
+
+            formField("Handling time") {
+                Stepper("\(viewModel.formHandlingDays) day\(viewModel.formHandlingDays == 1 ? "" : "s")",
+                        value: $viewModel.formHandlingDays, in: 1...5)
+                    .font(.cardTitle)
+                    .foregroundColor(.labelPrimary)
+            }
+
+            Toggle("Buyer pays shipping", isOn: $viewModel.formBuyerPays)
+                .font(.cardTitle)
+                .foregroundColor(.labelPrimary)
+                .tint(.brandAccent)
+                .padding(.horizontal, Spacing.cardPadding)
+
+            Toggle("Set as default", isOn: $viewModel.formIsDefault)
+                .font(.cardTitle)
+                .foregroundColor(.labelPrimary)
+                .tint(.brandAccent)
+                .padding(.horizontal, Spacing.cardPadding)
+        }
+    }
+
+    private var profileFormActions: some View {
+        HStack(spacing: Spacing.md) {
+            if viewModel.editingProfile != nil {
+                Button {
+                    if let profile = viewModel.editingProfile {
+                        viewModel.deleteProfile(profile)
+                        notifyDefaultChanged()
+                    }
+                    viewModel.showAddSheet = false
+                } label: {
+                    Text("Delete")
+                        .font(.cardTitle)
+                        .foregroundColor(.negative)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.negative.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+            }
+            PrimaryButton("Save", isEnabled: !viewModel.formName.trimmingCharacters(in: .whitespaces).isEmpty) {
+                viewModel.saveProfile()
+                notifyDefaultChanged()
+                viewModel.showAddSheet = false
+            }
+        }
+        .padding(.horizontal, Spacing.screenMargin)
     }
 
     private func formField<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

@@ -16,52 +16,13 @@ struct OnboardingView: View {
             Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if currentStep > 0 {
-                    StepIndicator(current: currentStep, total: totalSteps)
-                        .padding(.top, Spacing.lg)
-                        .padding(.bottom, Spacing.md)
-                        .transition(.opacity)
-                }
-
-                Group {
-                    switch currentStep {
-                    case 0:
-                        OnboardingWelcomeStep {
-                            advance()
-                        }
-                    case 1:
-                        OnboardingSellerModeStep(
-                            onContinue: { advance() },
-                            onSkip: { advance() }
-                        )
-                    case 2:
-                        OnboardingCameraStep(
-                            onScanComplete: { record in
-                                onboardingScanRecord = record
-                                advance()
-                            },
-                            onSkip: { advance() }
-                        )
-                    case 3:
-                        OnboardingCompleteStep(
-                            scannedRecord: onboardingScanRecord,
-                            onFinish: {
-                                appState.completeOnboarding()
-                            },
-                            onContinueToListing: { _ in
-                                appState.completeOnboarding()
-                                showListingBuilder = true
-                            }
-                        )
-                    default:
-                        EmptyView()
-                    }
-                }
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                    removal: .move(edge: .leading).combined(with: .opacity)
-                ))
-                .id(currentStep)
+                stepIndicator
+                currentStepView
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+                    .id(currentStep)
             }
         }
         .animation(Motion.contentReveal(reduceMotion: reduceMotion), value: currentStep)
@@ -71,6 +32,50 @@ struct OnboardingView: View {
                     .environment(\.managedObjectContext, context)
                     .presentationDetents([.large])
             }
+        }
+    }
+
+    // MARK: - Subviews
+
+    @ViewBuilder
+    private var stepIndicator: some View {
+        if currentStep > 0 {
+            StepIndicator(current: currentStep, total: totalSteps)
+                .padding(.top, Spacing.lg)
+                .padding(.bottom, Spacing.md)
+                .transition(.opacity)
+        }
+    }
+
+    @ViewBuilder
+    private var currentStepView: some View {
+        switch currentStep {
+        case 0:
+            OnboardingWelcomeStep { advance() }
+        case 1:
+            OnboardingSellerModeStep(
+                onContinue: { advance() },
+                onSkip: { advance() }
+            )
+        case 2:
+            OnboardingCameraStep(
+                onScanComplete: { record in
+                    onboardingScanRecord = record
+                    advance()
+                },
+                onSkip: { advance() }
+            )
+        case 3:
+            OnboardingCompleteStep(
+                scannedRecord: onboardingScanRecord,
+                onFinish: { appState.completeOnboarding() },
+                onContinueToListing: { _ in
+                    appState.completeOnboarding()
+                    showListingBuilder = true
+                }
+            )
+        default:
+            EmptyView()
         }
     }
 

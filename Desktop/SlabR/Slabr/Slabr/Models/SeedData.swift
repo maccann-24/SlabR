@@ -11,7 +11,23 @@ enum SeedData {
         check.fetchLimit = 1
         guard (try? context.count(for: check)) == 0 else { return }
 
-        // -- PSA Graded Cards (listed) --
+        seedListedCards(context: context, userId: userId)
+        seedDraftCards(context: context, userId: userId)
+        seedRawDraftCards(context: context, userId: userId)
+        seedImportedCards(context: context, userId: userId)
+        seedDefaults(context: context, userId: userId)
+
+        do {
+            try context.save()
+            Log.coreData.info("Seed data populated: 18 listings (10 listed, 8 drafts)")
+        } catch {
+            Log.coreData.error("Seed data failed: \(error)")
+        }
+    }
+
+    // MARK: - Seed Helpers
+
+    private static func seedListedCards(context: NSManagedObjectContext, userId: String) {
         let listed: [(String, String, String, String, String, String?, String, Bool, Int32, Decimal, Int)] = [
             ("Shohei Ohtani",    "2023", "Topps",     "Chrome",       "150",  "Refractor",      "10", false, 45,  349.99, -3),
             ("Victor Wembanyama","2023", "Panini",    "Prizm",        "280",  nil,               "10", true,  12,  899.99, -5),
@@ -39,24 +55,25 @@ enum SeedData {
             c.certNumber = String(format: "%08d", 10000000 + i)
             c.entryMethod = "camera_psa"
 
-            let l = ListingRecord(context: context)
-            l.id = UUID()
-            l.date = Calendar.current.date(byAdding: .day, value: card.10, to: Date()) ?? Date()
-            l.userId = userId
-            l.entryPoint = "camera"
-            l.status = RecordStatus.listed.rawValue
-            l.listingPrice = card.9 as NSDecimalNumber
-            l.listingFormat = "fixedPrice"
-            l.listingId = "SLABR-\(UUID().uuidString.prefix(8))"
-            l.listedDate = l.date
-            l.card = c
+            let listing = ListingRecord(context: context)
+            listing.id = UUID()
+            listing.date = Calendar.current.date(byAdding: .day, value: card.10, to: Date()) ?? Date()
+            listing.userId = userId
+            listing.entryPoint = "camera"
+            listing.status = RecordStatus.listed.rawValue
+            listing.listingPrice = card.9 as NSDecimalNumber
+            listing.listingFormat = "fixedPrice"
+            listing.listingId = "SLABR-\(UUID().uuidString.prefix(8))"
+            listing.listedDate = listing.date
+            listing.card = c
 
-            let m = MediaRecord(context: context)
-            m.id = UUID()
-            m.listing = l
+            let media = MediaRecord(context: context)
+            media.id = UUID()
+            media.listing = listing
         }
+    }
 
-        // -- PSA Graded Cards (drafts) --
+    private static func seedDraftCards(context: NSManagedObjectContext, userId: String) {
         let drafts: [(String, String, String, String, String, String?, String, Bool, Int32, Int)] = [
             ("Anthony Edwards", "2020", "Panini",  "Prizm",   "258",  "Green",  "10", true,  34, -1),
             ("Chet Holmgren",   "2022", "Panini",  "Prizm",   "212",  nil,      "9",  true,  78, -1),
@@ -81,20 +98,21 @@ enum SeedData {
             c.certNumber = String(format: "%08d", 20000000 + i)
             c.entryMethod = "camera_psa"
 
-            let l = ListingRecord(context: context)
-            l.id = UUID()
-            l.date = Calendar.current.date(byAdding: .day, value: card.9, to: Date()) ?? Date()
-            l.userId = userId
-            l.entryPoint = "camera"
-            l.status = RecordStatus.draft.rawValue
-            l.card = c
+            let listing = ListingRecord(context: context)
+            listing.id = UUID()
+            listing.date = Calendar.current.date(byAdding: .day, value: card.9, to: Date()) ?? Date()
+            listing.userId = userId
+            listing.entryPoint = "camera"
+            listing.status = RecordStatus.draft.rawValue
+            listing.card = c
 
-            let m = MediaRecord(context: context)
-            m.id = UUID()
-            m.listing = l
+            let media = MediaRecord(context: context)
+            media.id = UUID()
+            media.listing = listing
         }
+    }
 
-        // -- Raw Cards (drafts, no grade) --
+    private static func seedRawDraftCards(context: NSManagedObjectContext, userId: String) {
         let rawDrafts: [(String, String, String, String, String, String?, Int)] = [
             ("Derek Jeter",     "1993", "SP",       "Foil",     "279",  "Near Mint (NM)",        0),
             ("Ken Griffey Jr.", "1989", "Upper Deck","Series 1", "1",    "Excellent-Mint (EX-MT)", -2),
@@ -112,20 +130,21 @@ enum SeedData {
             c.condition = card.5
             c.entryMethod = "camera_raw"
 
-            let l = ListingRecord(context: context)
-            l.id = UUID()
-            l.date = Calendar.current.date(byAdding: .day, value: card.6, to: Date()) ?? Date()
-            l.userId = userId
-            l.entryPoint = "camera"
-            l.status = RecordStatus.draft.rawValue
-            l.card = c
+            let listing = ListingRecord(context: context)
+            listing.id = UUID()
+            listing.date = Calendar.current.date(byAdding: .day, value: card.6, to: Date()) ?? Date()
+            listing.userId = userId
+            listing.entryPoint = "camera"
+            listing.status = RecordStatus.draft.rawValue
+            listing.card = c
 
-            let m = MediaRecord(context: context)
-            m.id = UUID()
-            m.listing = l
+            let media = MediaRecord(context: context)
+            media.id = UUID()
+            media.listing = listing
         }
+    }
 
-        // -- PSA Import Cards (listed, via photo import) --
+    private static func seedImportedCards(context: NSManagedObjectContext, userId: String) {
         let imported: [(String, String, String, String, String, String, Bool, Decimal, Int)] = [
             ("Trevor Lawrence", "2021", "Panini", "Prizm",  "331", "10", true,  185.00, -30),
             ("Mookie Betts",    "2014", "Topps",  "Chrome", "MB-50", "9", false, 125.00, -25),
@@ -145,24 +164,25 @@ enum SeedData {
             c.certNumber = String(format: "%08d", 30000000 + i)
             c.entryMethod = "photo_import"
 
-            let l = ListingRecord(context: context)
-            l.id = UUID()
-            l.date = Calendar.current.date(byAdding: .day, value: card.8, to: Date()) ?? Date()
-            l.userId = userId
-            l.entryPoint = "psa"
-            l.status = RecordStatus.listed.rawValue
-            l.listingPrice = card.7 as NSDecimalNumber
-            l.listingFormat = "fixedPrice"
-            l.listingId = "SLABR-\(UUID().uuidString.prefix(8))"
-            l.listedDate = l.date
-            l.card = c
+            let listing = ListingRecord(context: context)
+            listing.id = UUID()
+            listing.date = Calendar.current.date(byAdding: .day, value: card.8, to: Date()) ?? Date()
+            listing.userId = userId
+            listing.entryPoint = "psa"
+            listing.status = RecordStatus.listed.rawValue
+            listing.listingPrice = card.7 as NSDecimalNumber
+            listing.listingFormat = "fixedPrice"
+            listing.listingId = "SLABR-\(UUID().uuidString.prefix(8))"
+            listing.listedDate = listing.date
+            listing.card = c
 
-            let m = MediaRecord(context: context)
-            m.id = UUID()
-            m.listing = l
+            let media = MediaRecord(context: context)
+            media.id = UUID()
+            media.listing = listing
         }
+    }
 
-        // -- Shipping Profile --
+    private static func seedDefaults(context: NSManagedObjectContext, userId: String) {
         let ship = ShippingProfileEntity(context: context)
         ship.id = UUID()
         ship.userId = userId
@@ -172,21 +192,12 @@ enum SeedData {
         ship.buyerPays = true
         ship.isDefault = true
 
-        // -- User Settings --
         let settings = UserSettingsEntity(context: context)
         settings.userId = userId
         settings.sellerMode = SellerMode.regular.rawValue
         settings.defaultFormat = "fixedPrice"
         settings.returnsAccepted = true
         settings.returnPeriodDays = 30
-
-
-        do {
-            try context.save()
-            Log.coreData.info("Seed data populated: 18 listings (10 listed, 8 drafts)")
-        } catch {
-            Log.coreData.error("Seed data failed: \(error)")
-        }
     }
 
     /// Removes all seed data for a userId. Used for resetting during development.

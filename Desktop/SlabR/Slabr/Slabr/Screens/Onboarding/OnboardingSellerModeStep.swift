@@ -21,7 +21,19 @@ struct OnboardingSellerModeStep: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer().frame(height: Spacing.xl)
+            sellerModeHeader
+            Spacer().frame(height: Spacing.xl)
+            sellerModeOptions
+            Spacer()
+            sellerModeActions
+        }
+        .onAppear { appeared = true }
+    }
 
+    // MARK: - Subviews
+
+    private var sellerModeHeader: some View {
+        VStack(spacing: 0) {
             Text("How do you sell?")
                 .font(.sectionHeader)
                 .foregroundColor(.labelPrimary)
@@ -34,42 +46,41 @@ struct OnboardingSellerModeStep: View {
                 .padding(.top, Spacing.sm)
                 .opacity(appeared ? 1 : 0)
                 .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.2), value: appeared)
-
-            Spacer().frame(height: Spacing.xl)
-
-            VStack(spacing: Spacing.cardGap) {
-                ForEach(Array(options.enumerated()), id: \.element.mode.rawValue) { index, option in
-                    sellerModeCard(option.mode, icon: option.icon, subtitle: option.subtitle)
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared ? 0 : 12)
-                        .animation(
-                            Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.3 + Double(index) * 0.1),
-                            value: appeared
-                        )
-                }
-            }
-            .padding(.horizontal, Spacing.screenMargin)
-
-            Spacer()
-
-            VStack(spacing: Spacing.sm) {
-                PrimaryButton("Continue", isEnabled: selectedMode != nil) {
-                    if let mode = selectedMode {
-                        saveSellerMode(mode)
-                    }
-                    onContinue()
-                }
-
-                Button("Skip") { onSkip() }
-                    .font(.cardMeta)
-                    .foregroundColor(.labelSecondary)
-            }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.bottom, Spacing.xl)
-            .opacity(appeared ? 1 : 0)
-            .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.6), value: appeared)
         }
-        .onAppear { appeared = true }
+    }
+
+    private var sellerModeOptions: some View {
+        VStack(spacing: Spacing.cardGap) {
+            ForEach(Array(options.enumerated()), id: \.element.mode.rawValue) { index, option in
+                sellerModeCard(option.mode, icon: option.icon, subtitle: option.subtitle)
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 12)
+                    .animation(
+                        Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.3 + Double(index) * 0.1),
+                        value: appeared
+                    )
+            }
+        }
+        .padding(.horizontal, Spacing.screenMargin)
+    }
+
+    private var sellerModeActions: some View {
+        VStack(spacing: Spacing.sm) {
+            PrimaryButton("Continue", isEnabled: selectedMode != nil) {
+                if let mode = selectedMode {
+                    saveSellerMode(mode)
+                }
+                onContinue()
+            }
+
+            Button("Skip") { onSkip() }
+                .font(.cardMeta)
+                .foregroundColor(.labelSecondary)
+        }
+        .padding(.horizontal, Spacing.screenMargin)
+        .padding(.bottom, Spacing.xl)
+        .opacity(appeared ? 1 : 0)
+        .animation(Motion.contentReveal(reduceMotion: reduceMotion, delay: 0.6), value: appeared)
     }
 
     private func sellerModeCard(_ mode: SellerMode, icon: String, subtitle: String) -> some View {
