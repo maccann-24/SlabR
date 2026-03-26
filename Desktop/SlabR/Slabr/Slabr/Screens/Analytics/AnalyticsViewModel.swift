@@ -26,7 +26,10 @@ final class AnalyticsViewModel: ObservableObject {
     private var userId: String = ""
     private var allListings: [ListingRecord] = []
 
+    var isConfigured: Bool { context != nil }
+
     func configure(context: NSManagedObjectContext, userId: String) {
+        guard self.context == nil else { return }
         self.context = context
         self.userId = userId
     }

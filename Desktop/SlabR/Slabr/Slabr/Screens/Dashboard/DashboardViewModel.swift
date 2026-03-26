@@ -6,12 +6,16 @@ final class DashboardViewModel: ObservableObject {
     @Published var listedValue: Decimal = 0
     @Published var draftCount: Int = 0
     @Published var activeCount: Int = 0
+    @Published var gradedCount: Int = 0
     @Published var recentActivity: [ListingRecord] = []
 
     private var context: NSManagedObjectContext?
     private var userId: String = ""
 
+    var isConfigured: Bool { context != nil }
+
     func configure(context: NSManagedObjectContext, userId: String) {
+        guard self.context == nil else { return }
         self.context = context
         self.userId = userId
     }
@@ -31,17 +35,14 @@ final class DashboardViewModel: ObservableObject {
 
     private func loadCounts(context: NSManagedObjectContext) {
         do {
-            let allRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
-            allRequest.predicate = NSPredicate(format: "userId == %@", userId)
-            totalCards = try context.count(for: allRequest)
-
-            let draftRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
-            draftRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.draft.rawValue)
-            draftCount = try context.count(for: draftRequest)
-
-            let activeRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
-            activeRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.listed.rawValue)
-            activeCount = try context.count(for: activeRequest)
+            let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            request.predicate = NSPredicate(format: "userId == %@", userId)
+            request.relationshipKeyPathsForPrefetching = ["card"]
+            let all = try context.fetch(request)
+            totalCards = all.count
+            draftCount = all.filter { $0.status == RecordStatus.draft.rawValue }.count
+            activeCount = all.filter { $0.status == RecordStatus.listed.rawValue }.count
+            gradedCount = all.filter { ($0.card?.grade ?? "").isEmpty == false }.count
         } catch {
             Log.listings.error("Dashboard count fetch failed: \(error)")
         }

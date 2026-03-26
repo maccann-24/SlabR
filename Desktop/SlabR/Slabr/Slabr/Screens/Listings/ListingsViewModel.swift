@@ -8,9 +8,12 @@ final class ListingsViewModel: ObservableObject {
     private var context: NSManagedObjectContext?
     private var userId: String = ""
 
+    var isConfigured: Bool { context != nil }
+
     /// Injects the managed object context and userId. Must be called from `onAppear`
     /// because `@Environment` values aren't available at `@StateObject` init time.
     func configure(context: NSManagedObjectContext, userId: String) {
+        guard self.context == nil else { return }
         self.context = context
         self.userId = userId
     }
