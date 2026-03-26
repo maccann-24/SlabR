@@ -44,6 +44,16 @@ final class ListingBuilderViewModel: ObservableObject {
     }
     var recordUserId: String { listing.userId ?? "" }
 
+    // MARK: - Access Control
+
+    func showConditionGuideButton(userId: String) -> Bool {
+        AccessControl.hasAccess(userId: userId, feature: .conditionGuide)
+    }
+
+    func canPublishToEbay(userId: String) -> Bool {
+        AccessControl.hasAccess(userId: userId, feature: .directEbayPublish)
+    }
+
     /// True if this is a raw (ungraded) card — shows condition selector, hides PSA fields.
     var isRawCard: Bool {
         let hasGrade = !(listing.card?.grade ?? "").isEmpty

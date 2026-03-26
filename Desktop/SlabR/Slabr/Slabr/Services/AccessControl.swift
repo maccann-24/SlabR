@@ -5,7 +5,7 @@ import os
 /// plus a lifetime tier, and maps 9 features to their required minimum tier.
 /// Includes a 7-day free trial that grants all features on first install.
 /// `currentTier()` currently always returns `.free` — StoreKit 2 integration is TODO (Phase 11).
-final class AccessControl {
+enum AccessControl {
 
     // Lifetime free — no IAP, no Apple cut, no expiry, no renewal risk
     private static let lifetimeFreeUserIds: Set<String> = [

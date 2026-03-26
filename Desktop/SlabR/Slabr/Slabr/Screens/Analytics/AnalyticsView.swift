@@ -6,7 +6,7 @@ struct AnalyticsView: View {
     @Environment(\.managedObjectContext) private var context
     @StateObject private var viewModel = AnalyticsViewModel()
     @State private var showUpgradeSheet = false
-
+    @State private var shareURL: URL?
 
     var body: some View {
         ScrollView {
@@ -49,6 +49,14 @@ struct AnalyticsView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             UpgradeSheet(feature: .analyticsExport)
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: Binding(
+            get: { shareURL != nil },
+            set: { if !$0 { shareURL = nil } }
+        )) {
+            if let url = shareURL {
+                ActivityShareSheet(items: [url])
+            }
         }
     }
 
@@ -136,9 +144,9 @@ struct AnalyticsView: View {
 
     private var exportButton: some View {
         Button {
-            if AccessControl.hasAccess(userId: appState.userId, feature: .analyticsExport) {
+            if viewModel.canExport(userId: appState.userId) {
                 if let url = viewModel.exportCSV() {
-                    presentShareSheet(url: url)
+                    shareURL = url
                 }
             } else {
                 showUpgradeSheet = true
@@ -152,16 +160,5 @@ struct AnalyticsView: View {
                 .background(Color.cardSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-    }
-
-    private func presentShareSheet(url: URL) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = windowScene.windows.first?.rootViewController else { return }
-        let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        // Find the topmost presented controller to avoid conflicts
-        var top = rootVC
-        while let presented = top.presentedViewController { top = presented }
-        vc.popoverPresentationController?.sourceView = top.view
-        top.present(vc, animated: true)
     }
 }

@@ -64,9 +64,9 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var trialStatusRow: some View {
-        let daysLeft = AccessControl.trialDaysRemaining()
+        let daysLeft = viewModel.trialDaysRemaining()
         let trialColor: Color = daysLeft <= 1 ? .negative : daysLeft <= 3 ? .warning : .brandAccent
-        if AccessControl.isTrialActive() {
+        if viewModel.isTrialActive() {
             HStack(spacing: 0) {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(trialColor)
@@ -91,7 +91,7 @@ struct SettingsView: View {
             }
             .background(Color.brandAccentFaint)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-        } else if AccessControl.currentTier(userId: appState.userId) == .free {
+        } else if viewModel.currentTier(userId: appState.userId) == .free {
             HStack(spacing: Spacing.md) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.labelSecondary)
@@ -148,7 +148,7 @@ struct SettingsView: View {
             HStack(spacing: Spacing.sm) {
                 ForEach(SellerMode.allCases, id: \.rawValue) { mode in
                     FilterChip(title: mode.displayName, isSelected: viewModel.sellerMode == mode) {
-                        if mode == .highVolume && !AccessControl.hasAccess(userId: appState.userId, feature: .speedMode) {
+                        if mode == .highVolume && !viewModel.canAccessSpeedMode(userId: appState.userId) {
                             blockedFeature = .speedMode
                         } else {
                             viewModel.saveSellerMode(mode)

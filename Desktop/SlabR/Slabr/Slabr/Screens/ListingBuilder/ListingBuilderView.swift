@@ -147,10 +147,7 @@ struct ListingBuilderView: View {
         CardSection(title: "") {
             ConditionSelector(
                 selectedCondition: $viewModel.condition,
-                showGuideButton: AccessControl.hasAccess(
-                    userId: viewModel.recordUserId,
-                    feature: .conditionGuide
-                ),
+                showGuideButton: viewModel.showConditionGuideButton(userId: viewModel.recordUserId),
                 onGuideRequested: { showConditionGuide = true }
             )
         }
@@ -288,7 +285,7 @@ struct ListingBuilderView: View {
     private var bottomButtons: some View {
         VStack(spacing: Spacing.sm) {
             PrimaryButton("Publish to eBay", isEnabled: viewModel.canPublish) {
-                if AccessControl.hasAccess(userId: viewModel.recordUserId, feature: .directEbayPublish) {
+                if viewModel.canPublishToEbay(userId: viewModel.recordUserId) {
                     viewModel.publish()
                 } else {
                     showUpgradeSheet = true

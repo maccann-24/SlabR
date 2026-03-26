@@ -22,6 +22,8 @@ final class AnalyticsViewModel: ObservableObject {
     @Published var statusBreakdown: [CountItem] = []
     @Published var hasData = false
 
+    private static let csvDateFormatter = ISO8601DateFormatter()
+
     private var context: NSManagedObjectContext?
     private var userId: String = ""
     private var allListings: [ListingRecord] = []
@@ -113,6 +115,12 @@ final class AnalyticsViewModel: ObservableObject {
         ]
     }
 
+    // MARK: - Access Control
+
+    func canExport(userId: String) -> Bool {
+        AccessControl.hasAccess(userId: userId, feature: .analyticsExport)
+    }
+
     // MARK: - CSV Export
 
     private func escapeCSVField(_ field: String) -> String {
@@ -145,7 +153,7 @@ final class AnalyticsViewModel: ObservableObject {
             return nil
         }
 
-        let dateFormatter = AccessControl.iso8601Formatter
+        let dateFormatter = Self.csvDateFormatter
         var rows = ["Date,Player,Year,Brand,Set,Grade,Cert,Price,Status,Source"]
 
         for listing in listings {

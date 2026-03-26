@@ -33,6 +33,24 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Access Control
+
+    func isTrialActive() -> Bool {
+        AccessControl.isTrialActive()
+    }
+
+    func trialDaysRemaining() -> Int {
+        AccessControl.trialDaysRemaining()
+    }
+
+    func currentTier(userId: String) -> AccessControl.SubscriptionTier {
+        AccessControl.currentTier(userId: userId)
+    }
+
+    func canAccessSpeedMode(userId: String) -> Bool {
+        AccessControl.hasAccess(userId: userId, feature: .speedMode)
+    }
+
     // MARK: - Shared Helper
 
     static func fetchOrCreateSettings(context: NSManagedObjectContext, userId: String) -> UserSettingsEntity? {
