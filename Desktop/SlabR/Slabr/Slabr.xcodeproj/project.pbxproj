@@ -28,14 +28,29 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F600100001 /* Dev.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Dev.xcconfig; path = ../Configuration/Dev.xcconfig; sourceTree = "<group>"; };
+		A1B2C3D4E5F600100002 /* Prod.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Prod.xcconfig; path = ../Configuration/Prod.xcconfig; sourceTree = "<group>"; };
 		419B212B2F6B68FC00121050 /* Slabr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slabr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		419B213D2F6B690400121050 /* SlabrTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SlabrTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		419B21472F6B690400121050 /* SlabrUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SlabrUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1B2C3D4E5F600100004 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 419B212A2F6B68FC00121050 /* Slabr */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		419B212D2F6B68FC00121050 /* Slabr */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1B2C3D4E5F600100004 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			path = Slabr;
 			sourceTree = "<group>";
 		};
@@ -80,11 +95,21 @@
 		419B21222F6B68FC00121050 = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F600100003 /* Configuration */,
 				419B212D2F6B68FC00121050 /* Slabr */,
 				419B21402F6B690400121050 /* SlabrTests */,
 				419B214A2F6B690400121050 /* SlabrUITests */,
 				419B212C2F6B68FC00121050 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F600100003 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F600100001 /* Dev.xcconfig */,
+				A1B2C3D4E5F600100002 /* Prod.xcconfig */,
+			);
+			name = Configuration;
 			sourceTree = "<group>";
 		};
 		419B212C2F6B68FC00121050 /* Products */ = {
@@ -280,6 +305,7 @@
 /* Begin XCBuildConfiguration section */
 		419B214F2F6B690400121050 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F600100001 /* Dev.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -342,6 +368,7 @@
 		};
 		419B21502F6B690400121050 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F600100002 /* Prod.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -403,7 +430,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 269RS5MJBW;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Slabr/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Slabr uses the camera to scan and identify trading cards.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -437,7 +465,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 269RS5MJBW;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Slabr/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Slabr uses the camera to scan and identify trading cards.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

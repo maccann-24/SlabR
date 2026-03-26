@@ -1,0 +1,10 @@
+// Slabr Production Configuration
+// Copy this to Prod.xcconfig and fill in your values
+// Prod.xcconfig is in .gitignore — never commit it
+
+EBAY_CLIENT_ID = YOUR_PRODUCTION_CLIENT_ID
+EBAY_CLIENT_SECRET = YOUR_PRODUCTION_CLIENT_SECRET
+EBAY_RUNAME = YOUR_PRODUCTION_RUNAME
+EBAY_ENVIRONMENT = production
+SENTRY_DSN =
+URL_SCHEME = slabr

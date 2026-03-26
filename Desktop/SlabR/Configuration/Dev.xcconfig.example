@@ -1,0 +1,10 @@
+// Slabr Development Configuration
+// Copy this to Dev.xcconfig and fill in your values
+// Dev.xcconfig is in .gitignore — never commit it
+
+EBAY_CLIENT_ID = YOUR_SANDBOX_CLIENT_ID
+EBAY_CLIENT_SECRET = YOUR_SANDBOX_CLIENT_SECRET
+EBAY_RUNAME = YOUR_SANDBOX_RUNAME
+EBAY_ENVIRONMENT = sandbox
+SENTRY_DSN =
+URL_SCHEME = slabr
