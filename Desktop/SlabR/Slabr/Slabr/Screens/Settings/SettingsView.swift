@@ -4,7 +4,7 @@ import CoreData
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.managedObjectContext) private var context
-    @State private var sellerMode: SellerMode = .regular
+    @StateObject private var viewModel = SettingsViewModel()
     @State private var blockedFeature: AccessControl.Feature?
 
     var body: some View {
@@ -50,7 +50,10 @@ struct SettingsView: View {
         }
         .background(Color.appBackground)
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { loadSellerMode() }
+        .onAppear {
+            viewModel.configure(context: context, userId: appState.userId)
+            viewModel.loadSellerMode()
+        }
         .sheet(item: $blockedFeature) { feature in
             UpgradeSheet(feature: feature)
                 .presentationDetents([.medium])
@@ -144,12 +147,11 @@ struct SettingsView: View {
             }
             HStack(spacing: Spacing.sm) {
                 ForEach(SellerMode.allCases, id: \.rawValue) { mode in
-                    FilterChip(title: mode.displayName, isSelected: sellerMode == mode) {
+                    FilterChip(title: mode.displayName, isSelected: viewModel.sellerMode == mode) {
                         if mode == .highVolume && !AccessControl.hasAccess(userId: appState.userId, feature: .speedMode) {
                             blockedFeature = .speedMode
                         } else {
-                            sellerMode = mode
-                            saveSellerMode(mode)
+                            viewModel.saveSellerMode(mode)
                         }
                     }
                 }
@@ -158,38 +160,6 @@ struct SettingsView: View {
         .padding(Spacing.cardPadding)
         .background(Color.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func loadSellerMode() {
-        let request = NSFetchRequest<UserSettingsEntity>(entityName: "UserSettingsEntity")
-        request.predicate = NSPredicate(format: "userId == %@", appState.userId)
-        request.fetchLimit = 1
-        do {
-            if let entity = try context.fetch(request).first {
-                sellerMode = SellerMode(legacyValue: entity.sellerMode ?? "regular")
-            }
-        } catch {
-            Log.settings.error("Failed to load seller mode: \(error)")
-        }
-    }
-
-    private func saveSellerMode(_ mode: SellerMode) {
-        let request = NSFetchRequest<UserSettingsEntity>(entityName: "UserSettingsEntity")
-        request.predicate = NSPredicate(format: "userId == %@", appState.userId)
-        request.fetchLimit = 1
-        let entity: UserSettingsEntity
-        do {
-            if let existing = try context.fetch(request).first {
-                entity = existing
-            } else {
-                entity = UserSettingsEntity(context: context)
-                entity.userId = appState.userId
-            }
-            entity.sellerMode = mode.rawValue
-            try context.save()
-        } catch {
-            Log.settings.error("Failed to save seller mode: \(error)")
-        }
     }
 
     // MARK: - Debug

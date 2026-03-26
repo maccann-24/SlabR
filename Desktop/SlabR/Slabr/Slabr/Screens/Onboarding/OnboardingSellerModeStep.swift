@@ -114,18 +114,9 @@ struct OnboardingSellerModeStep: View {
     }
 
     private func saveSellerMode(_ mode: SellerMode) {
-        let request = NSFetchRequest<UserSettingsEntity>(entityName: "UserSettingsEntity")
-        request.predicate = NSPredicate(format: "userId == %@", appState.userId)
-        request.fetchLimit = 1
+        guard let entity = SettingsViewModel.fetchOrCreateSettings(context: context, userId: appState.userId) else { return }
+        entity.sellerMode = mode.rawValue
         do {
-            let entity: UserSettingsEntity
-            if let existing = try context.fetch(request).first {
-                entity = existing
-            } else {
-                entity = UserSettingsEntity(context: context)
-                entity.userId = appState.userId
-            }
-            entity.sellerMode = mode.rawValue
             try context.save()
         } catch {
             Log.onboarding.error("Failed to save seller mode: \(error)")
