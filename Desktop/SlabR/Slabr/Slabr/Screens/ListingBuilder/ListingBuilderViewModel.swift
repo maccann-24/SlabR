@@ -30,7 +30,7 @@ final class ListingBuilderViewModel: ObservableObject {
     let grade: String?
     let certNumber: String?
     let isRookie: Bool
-    let thumbnailImage: UIImage?
+    @Published private(set) var thumbnailImage: UIImage?
     @Published var condition: CardCondition?
 
     private let listing: ListingRecord
@@ -77,6 +77,16 @@ final class ListingBuilderViewModel: ObservableObject {
         priceError = validatePrice()
     }
 
+    func loadThumbnail() {
+        guard let data = listing.media?.thumbnailData else { return }
+        Task.detached(priority: .utility) { [weak self] in
+            let image = UIImage(data: data)
+            await MainActor.run {
+                self?.thumbnailImage = image
+            }
+        }
+    }
+
     init(listing: ListingRecord, ebayService: EbayServiceProtocol = EbayService.shared) {
         self.listing = listing
         self.ebayService = ebayService
@@ -91,11 +101,7 @@ final class ListingBuilderViewModel: ObservableObject {
         self.grade = listing.card?.grade
         self.certNumber = listing.card?.certNumber
         self.isRookie = listing.card?.isRookie ?? false
-        if let data = listing.media?.thumbnailData {
-            self.thumbnailImage = UIImage(data: data)
-        } else {
-            self.thumbnailImage = nil
-        }
+        self.thumbnailImage = nil
 
         // Set title
         self.title = listing.effectiveListingTitle

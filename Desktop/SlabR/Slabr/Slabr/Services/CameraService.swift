@@ -47,7 +47,9 @@ final class CameraService: NSObject, CameraServiceProtocol {
     init(detectionService: CardDetectionServiceProtocol = CardDetectionService()) {
         self.detectionService = detectionService
         super.init()
-        configureSession()
+        sessionQueue.async { [self] in
+            self.configureSession()
+        }
     }
 
     // MARK: - Configuration

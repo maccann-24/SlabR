@@ -29,6 +29,7 @@ struct ListingBuilderView: View {
         }
         .padding(.top, Spacing.md)
         .background(Color.appBackground)
+        .task { viewModel.loadThumbnail() }
         .onDisappear {
             if case .editing = viewModel.state {
                 viewModel.saveDraft()

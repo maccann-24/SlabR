@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 
 struct ThumbnailView: View {
@@ -31,9 +32,20 @@ struct ThumbnailView: View {
     private func decode() {
         guard let data else { image = nil; return }
         let capturedData = data
-        Task.detached(priority: .userInitiated) {
-            let decoded = UIImage(data: capturedData)
-            await MainActor.run { image = decoded }
+        let targetPixels = size * UIScreen.main.scale
+        Task.detached(priority: .utility) {
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceThumbnailMaxPixelSize: targetPixels,
+                kCGImageSourceCreateThumbnailWithTransform: true
+            ]
+            guard let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
+                  let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+                await MainActor.run { self.image = nil }
+                return
+            }
+            let decoded = UIImage(cgImage: cgImage)
+            await MainActor.run { self.image = decoded }
         }
     }
 }
