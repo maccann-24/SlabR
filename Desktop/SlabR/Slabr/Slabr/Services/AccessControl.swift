@@ -5,10 +5,11 @@ import os
 /// plus a lifetime tier, and maps 9 features to their required minimum tier.
 /// Includes a 7-day free trial that grants starter-level access on first install.
 /// `currentTier()` queries the injected `SubscriptionService` for StoreKit 2 entitlements.
+@MainActor
 enum AccessControl {
 
     /// Injected at app startup. Used by `currentTier()` to resolve StoreKit 2 entitlements.
-    @MainActor static var subscriptionService: (any SubscriptionServiceProtocol)?
+    static var subscriptionService: (any SubscriptionServiceProtocol)?
 
     // Lifetime free — no IAP, no Apple cut, no expiry, no renewal risk
     private static let lifetimeFreeUserIds: Set<String> = [
@@ -31,13 +32,13 @@ enum AccessControl {
 
     /// Returns whether a user's subscription tier grants access to a feature.
     /// Lifetime free users and active trial users bypass all tier checks.
-    @MainActor static func hasAccess(userId: String, feature: Feature) -> Bool {
+    static func hasAccess(userId: String, feature: Feature) -> Bool {
         if lifetimeFreeUserIds.contains(userId) { return true }
         if isTrialActive() { return true }
         return feature.requiredTier <= currentTier(userId: userId)
     }
 
-    @MainActor static func currentTier(userId: String) -> SubscriptionTier {
+    static func currentTier(userId: String) -> SubscriptionTier {
         if lifetimeFreeUserIds.contains(userId) { return .lifetime }
         if let service = subscriptionService {
             let tier = service.currentTier

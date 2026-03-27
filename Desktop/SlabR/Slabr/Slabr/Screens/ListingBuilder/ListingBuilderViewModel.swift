@@ -149,11 +149,7 @@ final class ListingBuilderViewModel: ObservableObject {
 
     init(
         listing: ListingRecord,
-        ebayService: EbayServiceProtocol = {
-            EbayAuthService.shared.isAuthenticated()
-                ? RealEbayService.shared as EbayServiceProtocol
-                : EbayService.shared as EbayServiceProtocol
-        }()
+        ebayService: EbayServiceProtocol = RealEbayService.shared
     ) {
         self.listing = listing
         self.ebayService = ebayService

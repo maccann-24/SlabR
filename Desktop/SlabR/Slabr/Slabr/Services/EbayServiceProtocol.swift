@@ -30,4 +30,6 @@ protocol EbayServiceProtocol {
     func canPublish(request: ListingPublishRequest) -> Bool
 }
 
+#if DEBUG
 extension EbayService: EbayServiceProtocol {}
+#endif

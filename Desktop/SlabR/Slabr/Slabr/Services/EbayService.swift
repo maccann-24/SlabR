@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 
 /// eBay listing service. **Currently a mock** — generates fake listing IDs.
@@ -45,3 +46,4 @@ final class EbayService {
         request.price > 0 && !request.title.isEmpty && request.title.count <= 80
     }
 }
+#endif
