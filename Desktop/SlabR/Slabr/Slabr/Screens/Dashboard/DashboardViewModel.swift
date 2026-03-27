@@ -35,14 +35,21 @@ final class DashboardViewModel: ObservableObject {
 
     private func loadCounts(context: NSManagedObjectContext) {
         do {
-            let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
-            request.predicate = NSPredicate(format: "userId == %@", userId)
-            request.relationshipKeyPathsForPrefetching = ["card"]
-            let all = try context.fetch(request)
-            totalCards = all.count
-            draftCount = all.filter { $0.status == RecordStatus.draft.rawValue }.count
-            activeCount = all.filter { $0.status == RecordStatus.listed.rawValue }.count
-            gradedCount = all.filter { ($0.card?.grade ?? "").isEmpty == false }.count
+            let allRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            allRequest.predicate = NSPredicate(format: "userId == %@", userId)
+            totalCards = try context.count(for: allRequest)
+
+            let draftRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            draftRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.draft.rawValue)
+            draftCount = try context.count(for: draftRequest)
+
+            let activeRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            activeRequest.predicate = NSPredicate(format: "userId == %@ AND status == %@", userId, RecordStatus.listed.rawValue)
+            activeCount = try context.count(for: activeRequest)
+
+            let gradedRequest = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
+            gradedRequest.predicate = NSPredicate(format: "userId == %@ AND card.grade != nil AND card.grade != ''", userId)
+            gradedCount = try context.count(for: gradedRequest)
         } catch {
             Log.listings.error("Dashboard count fetch failed: \(error)")
         }

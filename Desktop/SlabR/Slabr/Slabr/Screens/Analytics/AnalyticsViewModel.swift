@@ -27,6 +27,7 @@ final class AnalyticsViewModel: ObservableObject {
     private var context: NSManagedObjectContext?
     private var userId: String = ""
     private var allListings: [ListingRecord] = []
+    private var lastLoadTime: Date = .distantPast
 
     var isConfigured: Bool { context != nil }
 
@@ -38,9 +39,10 @@ final class AnalyticsViewModel: ObservableObject {
 
     func load() {
         guard let context else {
-            Log.listings.fault("AnalyticsViewModel.load() called before configure()")
+            Log.analytics.fault("AnalyticsViewModel.load() called before configure()")
             return
         }
+        guard Date.now.timeIntervalSince(lastLoadTime) > 5 else { return }
 
         let request = NSFetchRequest<ListingRecord>(entityName: "ListingRecord")
         request.predicate = NSPredicate(format: "userId == %@", userId)
@@ -64,6 +66,7 @@ final class AnalyticsViewModel: ObservableObject {
         buildStatusBreakdown()
 
         allListings = [] // Release memory — aggregated data is in @Published properties
+        lastLoadTime = .now
     }
 
     // MARK: - Aggregations
