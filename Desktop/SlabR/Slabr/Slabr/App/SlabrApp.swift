@@ -7,6 +7,7 @@ struct SlabrApp: App {
 
     init() {
         SentrySetup.start()
+        AppEnvironment.validateAtStartup()
     }
 
     var body: some Scene {

@@ -6,9 +6,8 @@ import Sentry
 enum SentrySetup {
     /// Call once from `SlabrApp.init()`. Configures session tracking and a 20% traces sample rate.
     static func start() {
-        guard let dsn = Bundle.main.infoDictionary?["SENTRY_DSN"] as? String,
-              !dsn.isEmpty,
-              dsn != "$(SENTRY_DSN)" else {
+        guard let dsn = AppEnvironment.sentryDSN,
+              !dsn.isEmpty else {
             Log.settings.info("Sentry DSN not configured — crash reporting disabled")
             return
         }
