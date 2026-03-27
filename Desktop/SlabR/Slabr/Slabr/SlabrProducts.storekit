@@ -1,0 +1,192 @@
+{
+  "identifier" : "5A6B7C8D",
+  "type" : "AutoRenewableSubscription",
+  "version" : 3,
+  "subscriptionGroups" : [
+    {
+      "id" : "slabr_premium",
+      "localizations" : [
+        {
+          "description" : "Slabr Premium Subscriptions",
+          "displayName" : "Slabr Premium",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Slabr Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "19.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "starter_monthly",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited imports + eBay publishing",
+              "displayName" : "Starter Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.starter.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Starter Monthly",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "29.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "seller_monthly",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Batch + speed mode for high-volume sellers",
+              "displayName" : "Seller Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.seller.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Seller Monthly",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "49.99",
+          "familyShareable" : false,
+          "groupNumber" : 3,
+          "internalID" : "pro_monthly",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Pricing suggestions + all seller features",
+              "displayName" : "Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "99.99",
+          "familyShareable" : false,
+          "groupNumber" : 4,
+          "internalID" : "power_monthly",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Multi-store + analytics export + everything",
+              "displayName" : "Power Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.power.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Power Monthly",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "189.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "starter_annual",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited imports + eBay publishing (annual)",
+              "displayName" : "Starter Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.starter.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Starter Annual",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "289.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "seller_annual",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Batch + speed mode for high-volume sellers (annual)",
+              "displayName" : "Seller Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.seller.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Seller Annual",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "489.99",
+          "familyShareable" : false,
+          "groupNumber" : 3,
+          "internalID" : "pro_annual",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Pricing suggestions + all seller features (annual)",
+              "displayName" : "Pro Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.pro.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Annual",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "989.99",
+          "familyShareable" : false,
+          "groupNumber" : 4,
+          "internalID" : "power_annual",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Multi-store + analytics export + everything (annual)",
+              "displayName" : "Power Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.slabr.power.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Power Annual",
+          "subscriptionGroupID" : "slabr_premium",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "slabr_app",
+    "_developerTeamID" : "TEAM_ID"
+  }
+}
