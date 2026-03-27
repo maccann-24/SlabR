@@ -39,6 +39,12 @@ struct SettingsView: View {
             trialStatusRow
 
             NavigationLink {
+                SubscriptionView()
+            } label: {
+                settingsRow(icon: "creditcard.fill", title: "Subscription")
+            }
+
+            NavigationLink {
                 ListingDefaultsView(
                     viewModel: ListingDefaultsViewModel(context: context, userId: appState.userId)
                 )
@@ -89,9 +95,36 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var trialStatusRow: some View {
-        let daysLeft = viewModel.trialDaysRemaining()
-        let trialColor: Color = daysLeft <= 1 ? .negative : daysLeft <= 3 ? .warning : .brandAccent
-        if viewModel.isTrialActive() {
+        let tier = viewModel.currentTier(userId: appState.userId)
+        if tier > .free && tier != .lifetime && !viewModel.isTrialActive() {
+            // Active subscriber
+            HStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.positive)
+                    .frame(width: 3)
+                    .padding(.vertical, Spacing.sm)
+
+                HStack(spacing: Spacing.md) {
+                    Image(systemName: "crown.fill")
+                        .foregroundColor(.positive)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("\(tier.displayName) Plan")
+                            .font(.cardTitle)
+                            .foregroundColor(.labelPrimary)
+                        Text("Active subscription")
+                            .font(.cardMeta)
+                            .foregroundColor(.positive)
+                    }
+                    Spacer()
+                }
+                .padding(Spacing.cardPadding)
+            }
+            .background(Color.positive.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else if viewModel.isTrialActive() {
+            let daysLeft = viewModel.trialDaysRemaining()
+            let trialColor: Color = daysLeft <= 1 ? .negative : daysLeft <= 3 ? .warning : .brandAccent
             HStack(spacing: 0) {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(trialColor)
@@ -116,7 +149,7 @@ struct SettingsView: View {
             }
             .background(Color.brandAccentFaint)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-        } else if viewModel.currentTier(userId: appState.userId) == .free {
+        } else if tier == .free {
             HStack(spacing: Spacing.md) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.labelSecondary)
