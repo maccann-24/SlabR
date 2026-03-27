@@ -97,7 +97,14 @@ final class ListingBuilderViewModel: ObservableObject {
         }
     }
 
-    init(listing: ListingRecord, ebayService: EbayServiceProtocol = EbayService.shared) {
+    init(
+        listing: ListingRecord,
+        ebayService: EbayServiceProtocol = {
+            EbayAuthService.shared.isAuthenticated()
+                ? RealEbayService.shared as EbayServiceProtocol
+                : EbayService.shared as EbayServiceProtocol
+        }()
+    ) {
         self.listing = listing
         self.ebayService = ebayService
 
@@ -160,11 +167,26 @@ final class ListingBuilderViewModel: ObservableObject {
         state = .publishing
         writeFormToListing()
 
-        let request = ListingPublishRequest(
+        let ebayFormat: String = {
+            switch format {
+            case .auction: return "AUCTION"
+            case .fixedPrice, .buyItNow: return "FIXED_PRICE"
+            }
+        }()
+
+        var request = ListingPublishRequest(
             title: listing.effectiveListingTitle,
             price: listing.listingPrice as? Decimal ?? 0,
             condition: listing.card?.condition
         )
+        request.imageData = listing.media?.imageData
+        request.description = generateDescription()
+        request.playerName = playerName.isEmpty ? nil : playerName
+        request.year = year.isEmpty ? nil : year
+        request.brand = brand.isEmpty ? nil : brand
+        request.grade = grade
+        request.cardNumber = cardNumber.isEmpty ? nil : cardNumber
+        request.format = ebayFormat
 
         Task {
             do {
@@ -211,5 +233,46 @@ final class ListingBuilderViewModel: ObservableObject {
 
         // Save condition for raw cards
         listing.card?.condition = condition?.rawValue
+    }
+
+    /// Builds a listing description from card metadata.
+    /// Returns a plain-text description suitable for eBay's `listingDescription` field.
+    private func generateDescription() -> String {
+        var lines: [String] = []
+
+        // Title line
+        lines.append(listing.effectiveListingTitle)
+        lines.append("")
+
+        // Card details
+        if !playerName.isEmpty { lines.append("Player: \(playerName)") }
+        if !year.isEmpty { lines.append("Year: \(year)") }
+        if !brand.isEmpty { lines.append("Brand: \(brand)") }
+        if !setName.isEmpty { lines.append("Set: \(setName)") }
+        if !cardNumber.isEmpty { lines.append("Card #: \(cardNumber)") }
+
+        if let parallel, !parallel.isEmpty {
+            lines.append("Parallel: \(parallel)")
+        }
+
+        // Grading / condition
+        if let grade, !grade.isEmpty {
+            lines.append("Grade: PSA \(grade)")
+        }
+        if let certNumber, !certNumber.isEmpty {
+            lines.append("PSA Cert #: \(certNumber)")
+        }
+        if let condition {
+            lines.append("Condition: \(condition.rawValue)")
+        }
+
+        if isRookie {
+            lines.append("Rookie Card")
+        }
+
+        lines.append("")
+        lines.append("Listed with Slabr")
+
+        return lines.joined(separator: "\n")
     }
 }

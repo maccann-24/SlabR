@@ -41,6 +41,7 @@
     </entity>
     <entity name="MediaRecord" representedClassName="MediaRecord" syncable="YES" codeGenerationType="class">
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
         <attribute name="thumbnailData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
         <relationship name="listing" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ListingRecord" inverseName="media" inverseEntity="ListingRecord"/>
     </entity>

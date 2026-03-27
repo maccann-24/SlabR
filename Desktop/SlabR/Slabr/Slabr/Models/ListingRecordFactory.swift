@@ -10,6 +10,7 @@ enum ListingRecordFactory {
         entryPoint: String,
         userId: String,
         thumbnailData: Data?,
+        imageData: Data? = nil,
         in context: NSManagedObjectContext
     ) -> ListingRecord {
         let cardRecord = CardRecord(context: context)
@@ -37,6 +38,7 @@ enum ListingRecordFactory {
         let media = MediaRecord(context: context)
         media.id = UUID()
         media.thumbnailData = thumbnailData
+        media.imageData = imageData
         media.listing = listing
 
         return listing
@@ -48,6 +50,7 @@ enum ListingRecordFactory {
     static func createRawDraft(
         userId: String,
         thumbnailData: Data?,
+        imageData: Data? = nil,
         in context: NSManagedObjectContext
     ) -> ListingRecord {
         let cardRecord = CardRecord(context: context)
@@ -70,6 +73,7 @@ enum ListingRecordFactory {
         let media = MediaRecord(context: context)
         media.id = UUID()
         media.thumbnailData = thumbnailData
+        media.imageData = imageData
         media.listing = listing
 
         return listing

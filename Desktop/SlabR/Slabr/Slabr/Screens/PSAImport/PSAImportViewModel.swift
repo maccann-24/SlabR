@@ -97,11 +97,13 @@ final class PSAImportViewModel: ObservableObject {
             return
         }
 
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.85)
         let listing = ListingRecordFactory.createDraft(
             from: card,
             entryPoint: "psa",
             userId: userId,
             thumbnailData: selectedImage?.jpegData(compressionQuality: 0.7),
+            imageData: imageData,
             in: context
         )
 

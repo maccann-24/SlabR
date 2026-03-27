@@ -187,11 +187,13 @@ final class CameraViewModel: ObservableObject {
         guard let context, let image = capturedImage else { return }
 
         let thumbnailData = image.jpegData(compressionQuality: 0.7)
-        capturedImage = nil // Release full-res image (~36MB) — thumbnail data is sufficient
+        let imageData = image.jpegData(compressionQuality: 0.85)
+        capturedImage = nil // Release full-res UIImage from memory — JPEG data is persisted
 
         let listing = ListingRecordFactory.createRawDraft(
             userId: userId,
             thumbnailData: thumbnailData,
+            imageData: imageData,
             in: context
         )
 
@@ -214,11 +216,13 @@ final class CameraViewModel: ObservableObject {
             return
         }
 
+        let imageData = capturedImage?.jpegData(compressionQuality: 0.85)
         let listing = ListingRecordFactory.createDraft(
             from: card,
             entryPoint: "camera",
             userId: userId,
-            thumbnailData: nil,
+            thumbnailData: capturedImage?.jpegData(compressionQuality: 0.7),
+            imageData: imageData,
             in: context
         )
         listing.card?.entryMethod = "camera_psa"
