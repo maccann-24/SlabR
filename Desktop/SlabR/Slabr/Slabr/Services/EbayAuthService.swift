@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CryptoKit
 import Foundation
 import os
 
@@ -15,7 +16,7 @@ import os
 /// - Access token: short-lived (~2 hours), auto-refreshed
 /// - Refresh token: long-lived (~18 months), stored in Keychain
 /// - Access token validity is checked with a 60-second safety buffer
-final class EbayAuthService: NSObject, Sendable {
+final class EbayAuthService: NSObject {
     static let shared = EbayAuthService()
 
     private let scopes = [
@@ -23,6 +24,12 @@ final class EbayAuthService: NSObject, Sendable {
         "https://api.ebay.com/oauth/api_scope/sell.account",
         "https://api.ebay.com/oauth/api_scope/sell.fulfillment"
     ].joined(separator: " ")
+
+    /// PKCE code verifier stored between `authenticate()` and `exchangeCodeForTokens()`.
+    private var currentCodeVerifier: String?
+
+    /// OAuth state parameter stored between `authenticate()` and callback validation.
+    private var currentState: String?
 
     // MARK: - Errors
 
@@ -81,11 +88,23 @@ final class EbayAuthService: NSObject, Sendable {
         let encodedScopes = scopes.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? scopes
         let encodedRuName = ruName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ruName
 
+        // PKCE (RFC 7636)
+        let codeVerifier = generateCodeVerifier()
+        let codeChallenge = generateCodeChallenge(from: codeVerifier)
+        currentCodeVerifier = codeVerifier
+
+        // State parameter (CSRF protection)
+        let state = UUID().uuidString
+        currentState = state
+
         let authURLString = "\(env.authBaseURL)/oauth2/authorize"
             + "?client_id=\(clientId)"
             + "&redirect_uri=\(encodedRuName)"
             + "&response_type=code"
             + "&scope=\(encodedScopes)"
+            + "&code_challenge=\(codeChallenge)"
+            + "&code_challenge_method=S256"
+            + "&state=\(state)"
 
         guard let authURL = URL(string: authURLString) else {
             throw EbayAuthError.authenticationFailed("Invalid authorization URL")
@@ -95,8 +114,17 @@ final class EbayAuthService: NSObject, Sendable {
 
         let callbackURL = try await startWebAuthSession(url: authURL, callbackScheme: urlScheme)
 
-        guard let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
-              let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
+        guard let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false) else {
+            throw EbayAuthError.authenticationFailed("Invalid callback URL")
+        }
+
+        // Validate state parameter to prevent CSRF attacks
+        guard let returnedState = components.queryItems?.first(where: { $0.name == "state" })?.value,
+              returnedState == currentState else {
+            throw EbayAuthError.authenticationFailed("Invalid state parameter — possible CSRF attack")
+        }
+
+        guard let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
             throw EbayAuthError.authenticationFailed("No authorization code in callback")
         }
 
@@ -179,7 +207,7 @@ final class EbayAuthService: NSObject, Sendable {
             }
 
             session.presentationContextProvider = self
-            session.prefersEphemeralWebBrowserSession = false
+            session.prefersEphemeralWebBrowserSession = true
             session.start()
         }
     }
@@ -191,6 +219,7 @@ final class EbayAuthService: NSObject, Sendable {
         let body = "grant_type=authorization_code"
             + "&code=\(urlEncode(code))"
             + "&redirect_uri=\(urlEncode(AppEnvironment.ebayRuName))"
+            + "&code_verifier=\(urlEncode(currentCodeVerifier ?? ""))"
 
         let tokenResponse = try await performTokenRequest(body: body)
 
@@ -297,6 +326,27 @@ final class EbayAuthService: NSObject, Sendable {
         )
     }
 
+    // MARK: - Private — PKCE (RFC 7636)
+
+    /// Generates a cryptographically random code verifier (43-128 unreserved characters).
+    private func generateCodeVerifier() -> String {
+        var buffer = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, buffer.count, &buffer)
+        return Data(buffer).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    /// Produces the S256 code challenge: Base64-URL-encoded SHA-256 of the verifier.
+    private func generateCodeChallenge(from verifier: String) -> String {
+        let hash = SHA256.hash(data: Data(verifier.utf8))
+        return Data(hash).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
     // MARK: - Private — Helpers
 
     private static let urlEncodingAllowed: CharacterSet = {
@@ -316,8 +366,10 @@ final class EbayAuthService: NSObject, Sendable {
 
 extension EbayAuthService: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        // MainActor isolation is guaranteed because startWebAuthSession is @MainActor
-        ASPresentationAnchor()
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? ASPresentationAnchor()
     }
 }
 
