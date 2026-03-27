@@ -186,25 +186,36 @@ final class CameraViewModel: ObservableObject {
     func proceedWithRawCard() {
         guard let context, let image = capturedImage else { return }
 
-        let thumbnailData = image.jpegData(compressionQuality: 0.7)
-        let imageData = image.jpegData(compressionQuality: 0.85)
-        capturedImage = nil // Release full-res UIImage from memory — JPEG data is persisted
+        Task {
+            let (thumbnailData, imageData) = await Task.detached(priority: .utility) {
+                let thumbnail: Data? = {
+                    if let downscaled = VisionService.downscaled(image, maxDimension: 200) {
+                        return UIImage(cgImage: downscaled).jpegData(compressionQuality: 0.7)
+                    }
+                    return image.jpegData(compressionQuality: 0.7)
+                }()
+                let full = image.jpegData(compressionQuality: 0.85)
+                return (thumbnail, full)
+            }.value
 
-        let listing = ListingRecordFactory.createRawDraft(
-            userId: userId,
-            thumbnailData: thumbnailData,
-            imageData: imageData,
-            in: context
-        )
+            capturedImage = nil // Release full-res UIImage from memory — JPEG data is persisted
 
-        do {
-            try context.save()
-            self.savedRecord = listing
-            HapticManager.shared.postSuccess()
-            state = .saved
-        } catch {
-            Log.camera.error("Failed to save raw draft: \(error)")
-            state = .error("Failed to save draft.")
+            let listing = ListingRecordFactory.createRawDraft(
+                userId: userId,
+                thumbnailData: thumbnailData,
+                imageData: imageData,
+                in: context
+            )
+
+            do {
+                try context.save()
+                self.savedRecord = listing
+                HapticManager.shared.postSuccess()
+                state = .saved
+            } catch {
+                Log.camera.error("Failed to save raw draft: \(error)")
+                state = .error("Failed to save draft.")
+            }
         }
     }
 
@@ -216,25 +227,39 @@ final class CameraViewModel: ObservableObject {
             return
         }
 
-        let imageData = capturedImage?.jpegData(compressionQuality: 0.85)
-        let listing = ListingRecordFactory.createDraft(
-            from: card,
-            entryPoint: "camera",
-            userId: userId,
-            thumbnailData: capturedImage?.jpegData(compressionQuality: 0.7),
-            imageData: imageData,
-            in: context
-        )
-        listing.card?.entryMethod = "camera_psa"
+        let image = capturedImage
+        Task {
+            let (thumbnailData, imageData) = await Task.detached(priority: .utility) {
+                let thumbnail: Data? = {
+                    guard let image else { return nil }
+                    if let downscaled = VisionService.downscaled(image, maxDimension: 200) {
+                        return UIImage(cgImage: downscaled).jpegData(compressionQuality: 0.7)
+                    }
+                    return image.jpegData(compressionQuality: 0.7)
+                }()
+                let full = image?.jpegData(compressionQuality: 0.85)
+                return (thumbnail, full)
+            }.value
 
-        do {
-            try context.save()
-            self.savedRecord = listing
-            HapticManager.shared.postSuccess()
-            state = .saved
-        } catch {
-            Log.camera.error("Failed to save draft: \(error)")
-            state = .error("Failed to save draft.")
+            let listing = ListingRecordFactory.createDraft(
+                from: card,
+                entryPoint: "camera",
+                userId: userId,
+                thumbnailData: thumbnailData,
+                imageData: imageData,
+                in: context
+            )
+            listing.card?.entryMethod = "camera_psa"
+
+            do {
+                try context.save()
+                self.savedRecord = listing
+                HapticManager.shared.postSuccess()
+                state = .saved
+            } catch {
+                Log.camera.error("Failed to save draft: \(error)")
+                state = .error("Failed to save draft.")
+            }
         }
     }
 

@@ -124,6 +124,7 @@ final class ListingBuilderViewModel: ObservableObject {
     /// Auto-detects the best eBay category from card metadata using the Taxonomy API.
     /// Sets `suggestedCategory` on success; falls back to the default sports trading cards category.
     func loadCategory() {
+        guard suggestedCategory == nil else { return }
         let query = EbayCategoryService.suggestFromCard(
             playerName: playerName.isEmpty ? nil : playerName,
             brand: brand.isEmpty ? nil : brand

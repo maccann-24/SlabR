@@ -10,6 +10,7 @@ struct CategorySelector: View {
     @State private var searchText = ""
     @State private var searchResults: [EbayCategory] = []
     @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -108,26 +109,28 @@ struct CategorySelector: View {
     // MARK: - Search
 
     private func searchCategories() {
+        searchTask?.cancel()
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else {
             searchResults = []
+            isSearching = false
             return
         }
 
         isSearching = true
-        Task {
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+
             do {
                 let results = try await EbayCategoryService.suggestCategory(for: query)
-                await MainActor.run {
-                    searchResults = results
-                    isSearching = false
-                }
+                guard !Task.isCancelled else { return }
+                searchResults = results
             } catch {
-                await MainActor.run {
-                    searchResults = []
-                    isSearching = false
-                }
+                guard !Task.isCancelled else { return }
+                searchResults = []
             }
+            isSearching = false
         }
     }
 }

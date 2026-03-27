@@ -39,6 +39,7 @@ final class PSAService {
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let body = "grant_type=password&username=\(try urlEncode(username))&password=\(try urlEncode(password))"
@@ -86,6 +87,7 @@ final class PSAService {
             throw PSAServiceError.serverError(0)
         }
         var request = URLRequest(url: url)
+        request.timeoutInterval = 30
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let data: Data

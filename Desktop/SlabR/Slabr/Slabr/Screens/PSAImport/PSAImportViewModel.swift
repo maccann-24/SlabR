@@ -97,25 +97,39 @@ final class PSAImportViewModel: ObservableObject {
             return
         }
 
-        let imageData = selectedImage?.jpegData(compressionQuality: 0.85)
-        let listing = ListingRecordFactory.createDraft(
-            from: card,
-            entryPoint: "psa",
-            userId: userId,
-            thumbnailData: selectedImage?.jpegData(compressionQuality: 0.7),
-            imageData: imageData,
-            in: context
-        )
+        let image = selectedImage
+        Task {
+            let (thumbnailData, imageData) = await Task.detached(priority: .utility) {
+                let thumbnail: Data? = {
+                    guard let image else { return nil }
+                    if let downscaled = VisionService.downscaled(image, maxDimension: 200) {
+                        return UIImage(cgImage: downscaled).jpegData(compressionQuality: 0.7)
+                    }
+                    return image.jpegData(compressionQuality: 0.7)
+                }()
+                let full = image?.jpegData(compressionQuality: 0.85)
+                return (thumbnail, full)
+            }.value
 
-        do {
-            try context.save()
-            self.savedRecord = listing
-            selectedImage = nil
-            HapticManager.shared.postSuccess()
-            state = .saved
-        } catch {
-            Log.importing.error("Failed to save draft: \(error)")
-            state = .error("Failed to save draft.")
+            let listing = ListingRecordFactory.createDraft(
+                from: card,
+                entryPoint: "psa",
+                userId: userId,
+                thumbnailData: thumbnailData,
+                imageData: imageData,
+                in: context
+            )
+
+            do {
+                try context.save()
+                self.savedRecord = listing
+                selectedImage = nil
+                HapticManager.shared.postSuccess()
+                state = .saved
+            } catch {
+                Log.importing.error("Failed to save draft: \(error)")
+                state = .error("Failed to save draft.")
+            }
         }
     }
 

@@ -43,6 +43,7 @@ enum EbayCategoryService {
         }
 
         var request = URLRequest(url: url)
+        request.timeoutInterval = 30
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
