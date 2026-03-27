@@ -75,9 +75,12 @@ final class SubscriptionService: ObservableObject, SubscriptionServiceProtocol {
     private func listenForTransactions() -> Task<Void, Never> {
         Task.detached { [weak self] in
             for await result in Transaction.updates {
-                if let transaction = try? result.payloadValue {
+                do {
+                    let transaction = try result.payloadValue
                     await transaction.finish()
                     await self?.updateCurrentTier()
+                } catch {
+                    Log.subscription.error("Transaction verification failed: \(error)")
                 }
             }
         }
@@ -86,11 +89,15 @@ final class SubscriptionService: ObservableObject, SubscriptionServiceProtocol {
     private func updateCurrentTier() async {
         var highestTier: AccessControl.SubscriptionTier = .free
         for await result in Transaction.currentEntitlements {
-            if let transaction = try? result.payloadValue,
-               let product = SlabrProduct(rawValue: transaction.productID) {
-                if product.tier > highestTier {
-                    highestTier = product.tier
+            do {
+                let transaction = try result.payloadValue
+                if let product = SlabrProduct(rawValue: transaction.productID) {
+                    if product.tier > highestTier {
+                        highestTier = product.tier
+                    }
                 }
+            } catch {
+                Log.subscription.error("Entitlement verification failed: \(error)")
             }
         }
         currentTier = highestTier

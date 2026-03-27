@@ -59,7 +59,7 @@ final class RealEbayService: EbayServiceProtocol {
         let paymentPolicyId: String
     }
 
-    private static var cachedPolicies: BusinessPolicies?
+    private static let policiesLock = OSAllocatedUnfairLock<BusinessPolicies?>(initialState: nil)
 
     // MARK: - EbayServiceProtocol
 
@@ -312,7 +312,7 @@ final class RealEbayService: EbayServiceProtocol {
         token: String,
         baseURL: String
     ) async throws -> BusinessPolicies {
-        if let cached = Self.cachedPolicies {
+        if let cached = Self.policiesLock.withLock({ $0 }) {
             return cached
         }
 
@@ -348,7 +348,7 @@ final class RealEbayService: EbayServiceProtocol {
             paymentPolicyId: paymentId
         )
 
-        Self.cachedPolicies = policies
+        Self.policiesLock.withLock { $0 = policies }
         Log.ebay.info("Business policies verified — fulfillment: \(fulfillmentId, privacy: .public), return: \(returnId, privacy: .public), payment: \(paymentId, privacy: .public)")
         return policies
     }

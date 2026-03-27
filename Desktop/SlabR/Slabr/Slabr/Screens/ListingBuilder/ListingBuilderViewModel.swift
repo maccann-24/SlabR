@@ -38,6 +38,8 @@ final class ListingBuilderViewModel: ObservableObject {
     @Published private(set) var thumbnailImage: UIImage?
     @Published var condition: CardCondition?
 
+    private var publishTask: Task<Void, Never>?
+
     private let listing: ListingRecord
     private let ebayService: EbayServiceProtocol
     private var context: NSManagedObjectContext {
@@ -210,6 +212,7 @@ final class ListingBuilderViewModel: ObservableObject {
     }
 
     func publish() {
+        publishTask?.cancel()
         state = .publishing
         writeFormToListing()
 
@@ -235,9 +238,11 @@ final class ListingBuilderViewModel: ObservableObject {
         request.format = ebayFormat
         request.categoryId = category?.id ?? EbayCategoryService.defaultCategory.id
 
-        Task {
+        publishTask = Task {
+            guard !Task.isCancelled else { return }
             do {
                 let listingId = try await ebayService.publishListing(request: request)
+                guard !Task.isCancelled else { return }
 
                 listing.listingId = listingId
                 listing.status = RecordStatus.listed.rawValue
@@ -247,6 +252,7 @@ final class ListingBuilderViewModel: ObservableObject {
                 HapticManager.shared.listingPublished()
                 state = .published(listingId: listingId)
             } catch {
+                guard !Task.isCancelled else { return }
                 HapticManager.shared.postFailed()
                 state = .error(error.localizedDescription)
             }

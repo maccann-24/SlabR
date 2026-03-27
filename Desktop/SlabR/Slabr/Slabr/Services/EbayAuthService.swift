@@ -16,6 +16,7 @@ import os
 /// - Access token: short-lived (~2 hours), auto-refreshed
 /// - Refresh token: long-lived (~18 months), stored in Keychain
 /// - Access token validity is checked with a 60-second safety buffer
+@MainActor
 final class EbayAuthService: NSObject {
     static let shared = EbayAuthService()
 
