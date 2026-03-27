@@ -53,7 +53,11 @@ struct SettingsView: View {
                 settingsRow(icon: "shippingbox.fill", title: "Shipping profiles")
             }
 
-            settingsRow(icon: "link", title: "eBay account")
+            NavigationLink {
+                EbayAccountView()
+            } label: {
+                ebayAccountRow
+            }
             settingsRow(icon: "person.crop.circle", title: "PSA account")
 
             sellerModeRow
@@ -127,6 +131,31 @@ struct SettingsView: View {
             Text(title)
                 .font(.cardTitle)
                 .foregroundColor(.labelPrimary)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.labelSecondary)
+                .font(.caption)
+        }
+        .padding(Spacing.cardPadding)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - eBay Account Row
+
+    private var ebayAccountRow: some View {
+        HStack(spacing: Spacing.md) {
+            Image(systemName: "link")
+                .foregroundColor(.brandAccent)
+                .frame(width: 28)
+            Text("eBay account")
+                .font(.cardTitle)
+                .foregroundColor(.labelPrimary)
+            if viewModel.isEbayLinked {
+                Circle()
+                    .fill(Color.positive)
+                    .frame(width: 8, height: 8)
+            }
             Spacer()
             Image(systemName: "chevron.right")
                 .foregroundColor(.labelSecondary)

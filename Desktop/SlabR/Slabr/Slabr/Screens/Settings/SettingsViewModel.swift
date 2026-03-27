@@ -33,6 +33,12 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
+    // MARK: - eBay Link Status
+
+    var isEbayLinked: Bool {
+        EbayAuthService.shared.isAuthenticated()
+    }
+
     // MARK: - Access Control
 
     func isTrialActive() -> Bool {
