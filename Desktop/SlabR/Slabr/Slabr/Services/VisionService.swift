@@ -13,8 +13,9 @@ enum VisionService {
 
     /// Extracts an 8-digit PSA cert number from a CGImage (for camera frame processing).
     /// Skips downscaling since camera frames are already at a reasonable resolution (1280x720).
+    /// Uses `.fast` recognition level — sufficient for clear PSA slab labels at camera fps.
     static func extractCertNumber(from cgImage: CGImage) async throws -> String? {
-        let strings = try await performOCR(on: cgImage)
+        let strings = try await performOCR(on: cgImage, recognitionLevel: .fast)
         let combined = strings.joined(separator: " ")
         guard let match = combined.range(of: certPattern, options: .regularExpression) else {
             return nil
@@ -29,7 +30,11 @@ enum VisionService {
     /// Runs VNRecognizeTextRequest on a CGImage and returns recognized text strings.
     /// A `hasResumed` guard prevents double-continuation crashes when both the
     /// VNRecognizeTextRequest callback and the `perform()` catch block fire.
-    private static func performOCR(on cgImage: CGImage) async throws -> [String] {
+    /// - Parameter recognitionLevel: `.fast` for camera frames, `.accurate` for imported images.
+    private static func performOCR(
+        on cgImage: CGImage,
+        recognitionLevel: VNRequestTextRecognitionLevel = .accurate
+    ) async throws -> [String] {
         try await withCheckedThrowingContinuation { continuation in
             let hasResumed = OSAllocatedUnfairLock(initialState: false)
             let resume: (Result<[String], Error>) -> Void = { result in
@@ -51,7 +56,7 @@ enum VisionService {
                 let strings = candidates.compactMap { $0.topCandidates(1).first?.string }
                 resume(.success(strings))
             }
-            request.recognitionLevel = .accurate
+            request.recognitionLevel = recognitionLevel
             request.usesLanguageCorrection = false
             request.minimumTextHeight = 0.02
 

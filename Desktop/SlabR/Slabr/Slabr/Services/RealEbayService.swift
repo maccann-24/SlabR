@@ -182,6 +182,7 @@ final class RealEbayService: EbayServiceProtocol {
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "PUT"
+        urlRequest.timeoutInterval = 30
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("en-US", forHTTPHeaderField: "Content-Language")
         urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -241,6 +242,7 @@ final class RealEbayService: EbayServiceProtocol {
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
+        urlRequest.timeoutInterval = 30
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("en-US", forHTTPHeaderField: "Content-Language")
         urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -280,6 +282,7 @@ final class RealEbayService: EbayServiceProtocol {
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
+        urlRequest.timeoutInterval = 30
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
@@ -318,7 +321,7 @@ final class RealEbayService: EbayServiceProtocol {
 
         Log.ebay.info("Checking eBay business policies")
 
-        let fulfillmentId = try await fetchFirstPolicyId(
+        async let fulfillmentId = fetchFirstPolicyId(
             endpoint: "\(baseURL)/sell/account/v1/fulfillment_policy?marketplace_id=EBAY_US",
             policyKey: "fulfillmentPolicies",
             idKey: "fulfillmentPolicyId",
@@ -326,7 +329,7 @@ final class RealEbayService: EbayServiceProtocol {
             missingError: .missingFulfillmentPolicy
         )
 
-        let returnId = try await fetchFirstPolicyId(
+        async let returnId = fetchFirstPolicyId(
             endpoint: "\(baseURL)/sell/account/v1/return_policy?marketplace_id=EBAY_US",
             policyKey: "returnPolicies",
             idKey: "returnPolicyId",
@@ -334,7 +337,7 @@ final class RealEbayService: EbayServiceProtocol {
             missingError: .missingReturnPolicy
         )
 
-        let paymentId = try await fetchFirstPolicyId(
+        async let paymentId = fetchFirstPolicyId(
             endpoint: "\(baseURL)/sell/account/v1/payment_policy?marketplace_id=EBAY_US",
             policyKey: "paymentPolicies",
             idKey: "paymentPolicyId",
@@ -342,14 +345,14 @@ final class RealEbayService: EbayServiceProtocol {
             missingError: .missingPaymentPolicy
         )
 
-        let policies = BusinessPolicies(
+        let policies = try await BusinessPolicies(
             fulfillmentPolicyId: fulfillmentId,
             returnPolicyId: returnId,
             paymentPolicyId: paymentId
         )
 
         Self.policiesLock.withLock { $0 = policies }
-        Log.ebay.info("Business policies verified — fulfillment: \(fulfillmentId, privacy: .public), return: \(returnId, privacy: .public), payment: \(paymentId, privacy: .public)")
+        Log.ebay.info("Business policies verified — fulfillment: \(policies.fulfillmentPolicyId, privacy: .public), return: \(policies.returnPolicyId, privacy: .public), payment: \(policies.paymentPolicyId, privacy: .public)")
         return policies
     }
 
@@ -367,6 +370,7 @@ final class RealEbayService: EbayServiceProtocol {
         }
 
         var request = URLRequest(url: url)
+        request.timeoutInterval = 30
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 

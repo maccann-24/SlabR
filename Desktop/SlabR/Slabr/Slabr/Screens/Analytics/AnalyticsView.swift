@@ -5,6 +5,7 @@ struct AnalyticsView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.managedObjectContext) private var context
     @StateObject private var viewModel = AnalyticsViewModel()
+    @State private var hasAppeared = false
     @State private var showUpgradeSheet = false
     @State private var shareURL: URL?
 
@@ -44,7 +45,10 @@ struct AnalyticsView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             viewModel.configure(context: context, userId: appState.userId)
-            viewModel.load()
+            if !hasAppeared {
+                hasAppeared = true
+                viewModel.load()
+            }
         }
         .sheet(isPresented: $showUpgradeSheet) {
             UpgradeSheet(feature: .analyticsExport)
