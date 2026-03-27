@@ -68,17 +68,23 @@ final class SettingsViewModel: ObservableObject {
         for entityName in entities {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+            deleteRequest.resultType = .resultTypeObjectIDs
             do {
-                try context.execute(deleteRequest)
+                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                if let objectIDs = result?.result as? [NSManagedObjectID] {
+                    NSManagedObjectContext.mergeChanges(
+                        fromRemoteContextSave: [NSDeletedObjectsKey: objectIDs],
+                        into: [context]
+                    )
+                }
             } catch {
                 Log.settings.error("Failed to delete \(entityName): \(error)")
             }
         }
-        context.reset()
 
         // 2. Delete all Keychain keys
         let keychainKeys = [
-            KeychainKey.userId, KeychainKey.trialStartDate, KeychainKey.onboardingCompleted,
+            KeychainKey.userId, KeychainKey.onboardingCompleted,
             KeychainKey.psaToken, KeychainKey.psaTokenExpiry,
             KeychainKey.ebayAccessToken, KeychainKey.ebayRefreshToken,
             KeychainKey.ebayTokenExpiry, KeychainKey.ebayUsername
