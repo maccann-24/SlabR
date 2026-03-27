@@ -57,6 +57,42 @@ final class SettingsViewModel: ObservableObject {
         AccessControl.hasAccess(userId: userId, feature: .speedMode)
     }
 
+    // MARK: - Delete All Data
+
+    func deleteAllData(context: NSManagedObjectContext, appState: AppState) {
+        // 1. Delete all Core Data entities
+        let entities = [
+            "ListingRecord", "CardRecord", "MediaRecord",
+            "ShippingProfileEntity", "ListingTemplateEntity", "UserSettingsEntity"
+        ]
+        for entityName in entities {
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+            do {
+                try context.execute(deleteRequest)
+            } catch {
+                Log.settings.error("Failed to delete \(entityName): \(error)")
+            }
+        }
+        context.reset()
+
+        // 2. Delete all Keychain keys
+        let keychainKeys = [
+            KeychainKey.userId, KeychainKey.trialStartDate, KeychainKey.onboardingCompleted,
+            KeychainKey.psaToken, KeychainKey.psaTokenExpiry,
+            KeychainKey.ebayAccessToken, KeychainKey.ebayRefreshToken,
+            KeychainKey.ebayTokenExpiry, KeychainKey.ebayUsername
+        ]
+        for key in keychainKeys {
+            KeychainHelper.delete(key: key)
+        }
+
+        // 3. Reset app state to trigger onboarding
+        appState.hasCompletedOnboarding = false
+
+        Log.settings.info("All user data deleted")
+    }
+
     // MARK: - Shared Helper
 
     static func fetchOrCreateSettings(context: NSManagedObjectContext, userId: String) -> UserSettingsEntity? {

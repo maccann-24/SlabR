@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Environment(\.managedObjectContext) private var context
     @StateObject private var viewModel = SettingsViewModel()
     @State private var blockedFeature: AccessControl.Feature?
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -61,6 +62,21 @@ struct SettingsView: View {
             settingsRow(icon: "person.crop.circle", title: "PSA account")
 
             sellerModeRow
+
+            // MARK: - Data Management (visible in all builds)
+            Button(role: .destructive) {
+                showDeleteConfirmation = true
+            } label: {
+                settingsRow(icon: "trash", title: "Delete All Data")
+            }
+            .alert("Delete All Data?", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete Everything", role: .destructive) {
+                    viewModel.deleteAllData(context: context, appState: appState)
+                }
+            } message: {
+                Text("This will permanently delete all your cards, listings, settings, and account connections. This cannot be undone.")
+            }
 
             #if DEBUG
             debugSection
