@@ -59,6 +59,10 @@ enum KeychainKey {
     static let psaTokenExpiry = "psaTokenExpiry"
     static let trialStartDate = "trialStartDate"
     static let onboardingCompleted = "onboardingCompleted"
+    static let ebayAccessToken = "ebayAccessToken"
+    static let ebayRefreshToken = "ebayRefreshToken"
+    static let ebayTokenExpiry = "ebayTokenExpiry"
+    static let ebayUsername = "ebayUsername"
 }
 
 enum KeychainHelper {
