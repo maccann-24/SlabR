@@ -1,11 +1,13 @@
 import XCTest
 @testable import Slabr
 
+@MainActor
 final class AccessControlTests: XCTestCase {
 
     override func tearDown() {
         KeychainHelper.delete(key: KeychainKey.trialStartDate)
         AccessControl.invalidateTrialCache()
+        AccessControl.subscriptionService = nil
         super.tearDown()
     }
 

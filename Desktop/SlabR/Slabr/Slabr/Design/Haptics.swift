@@ -40,4 +40,12 @@ final class HapticManager {
     func warning() {
         notification.notificationOccurred(.warning)
     }
+
+    func success() {
+        notification.notificationOccurred(.success)
+    }
+
+    func error() {
+        notification.notificationOccurred(.error)
+    }
 }
