@@ -1,0 +1,29 @@
+TESTING INSTRUCTIONS FOR APPLE REVIEW
+
+Slabr is a sports card listing tool that creates eBay listings from PSA-graded cards.
+
+DEMO MODE (No Accounts Required)
+The app includes seed data with 18 sample card listings. Launch the app to see the dashboard populated with example cards, values, and analytics. No login is required to explore the interface.
+
+PSA LOOKUP
+To test PSA cert lookup, enter any valid PSA cert number (e.g., 10263088). The app queries the public PSA API (api.psacard.com) to retrieve card details. No PSA account is required for cert lookups.
+
+CAMERA / PHOTO IMPORT
+The camera scans PSA slab labels using on-device OCR (Vision framework). You can also import card photos from the camera roll. Camera permission is requested on first use.
+
+EBAY INTEGRATION
+eBay listing requires an active eBay seller account. If you do not have one, the app still functions fully for card scanning, inventory management, and analytics — eBay posting is the final optional step.
+
+To test eBay posting:
+- Tap "Link eBay Account" in Settings
+- Sign in with an eBay sandbox or production account
+- Create a listing from any card in your inventory
+
+SUBSCRIPTIONS
+The app uses StoreKit 2 for in-app purchases. Free tier allows 5 card imports. Paid tiers unlock unlimited imports and additional features. The upgrade sheet appears when a gated feature is accessed.
+
+DATA PRIVACY
+All card data is stored locally on-device. No user accounts are created. No data is synced to external servers. Sentry crash reporting (release builds only) is the only network telemetry — no PII is included.
+
+CONTACT
+support@exosource.com

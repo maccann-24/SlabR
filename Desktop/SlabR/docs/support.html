@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slabr — Support</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0F;
+            color: #E8E8ED;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #8E8E93;
+            margin-bottom: 40px;
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1C1C2E;
+        }
+        .faq-item {
+            margin-bottom: 24px;
+        }
+        .faq-question {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4361EE;
+            margin-bottom: 8px;
+        }
+        .faq-answer {
+            font-size: 15px;
+            color: #C7C7CC;
+        }
+        .faq-answer ol, .faq-answer ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+        .faq-answer li {
+            margin-bottom: 4px;
+        }
+        p {
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #C7C7CC;
+        }
+        a {
+            color: #4361EE;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .contact-card {
+            background: #1C1C2E;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .contact-card .label {
+            font-size: 14px;
+            color: #8E8E93;
+            margin-bottom: 8px;
+        }
+        .contact-card .email {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .contact-card .note {
+            font-size: 13px;
+            color: #8E8E93;
+            margin-top: 8px;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid #1C1C2E;
+            font-size: 13px;
+            color: #636366;
+        }
+        .footer a {
+            color: #636366;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 32px 16px 60px; }
+            h1 { font-size: 26px; }
+            h2 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Support</h1>
+        <p class="subtitle">Answers to common questions about Slabr.</p>
+
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">How do I link my eBay account?</div>
+            <div class="faq-answer">
+                <ol>
+                    <li>Open Slabr and go to <strong>Settings</strong></li>
+                    <li>Tap <strong>Link eBay Account</strong></li>
+                    <li>Sign in on eBay's login page (hosted by eBay, not Slabr)</li>
+                    <li>Authorize Slabr to create listings on your behalf</li>
+                </ol>
+                <p style="margin-top: 8px;">Your eBay tokens are stored securely in the iOS Keychain. To unlink, go to Settings and tap <strong>Unlink eBay Account</strong>.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How do I scan a card?</div>
+            <div class="faq-answer">
+                <p><strong>PSA graded cards:</strong> Tap the + button, then point your camera at the PSA slab label. Slabr reads the cert number via on-device OCR, looks up the card details from PSA, and auto-fills your listing.</p>
+                <p><strong>Photo import:</strong> Tap the + button, then choose a photo from your camera roll. Slabr will detect the card and extract details.</p>
+                <p><strong>Raw (ungraded) cards:</strong> Tap the + button, point your camera at any card, select the condition, set your price, and list it.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How do I delete my data?</div>
+            <div class="faq-answer">
+                <p>Go to <strong>Settings > Delete All Data</strong>. This permanently removes all card records, images, auth tokens, and preferences from your device.</p>
+                <p>Uninstalling the app also removes all local data.</p>
+                <p><strong>Note:</strong> Listings already published to eBay are not affected. To remove those, manage them directly on eBay.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Is my data stored on a server?</div>
+            <div class="faq-answer">
+                <p>No. All card data is stored locally on your iPhone. Slabr does not operate any servers. There are no user accounts, no cloud sync, and no server-side database. The only network calls are to PSA (cert lookup), eBay (listing creation), and Sentry (crash reports with no personal data).</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How do subscriptions work?</div>
+            <div class="faq-answer">
+                <p>Slabr offers four paid tiers: Starter, Seller, Pro, and Power. Each tier is available as a monthly or annual subscription. Payment is charged to your Apple ID. Subscriptions auto-renew unless canceled at least 24 hours before the current period ends.</p>
+                <p>Manage or cancel your subscription in <strong>App Store > Account > Subscriptions</strong>.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How do I restore a purchase?</div>
+            <div class="faq-answer">
+                <p>Open Slabr, go to <strong>Settings</strong>, and tap <strong>Restore Purchases</strong>. This syncs your subscription status with the App Store. Useful if you reinstalled the app or switched devices.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Why is my card not detected?</div>
+            <div class="faq-answer">
+                <p>Make sure the PSA label is clearly visible and well-lit. The camera needs to read the cert number printed on the label. Avoid glare on the slab. If the automatic scan fails, you can manually enter the cert number.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What eBay categories does Slabr support?</div>
+            <div class="faq-answer">
+                <p>Slabr uses eBay's Taxonomy API to auto-detect the correct category based on your card's sport, year, and attributes. Baseball, basketball, football, hockey, and soccer cards are supported. The category is suggested automatically and can be changed before publishing.</p>
+            </div>
+        </div>
+
+        <h2>Contact</h2>
+
+        <div class="contact-card">
+            <div class="label">Email us</div>
+            <div class="email"><a href="mailto:support@exosource.com">support@exosource.com</a></div>
+            <div class="note">We respond within 48 hours.</div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 ExoSource Media LLC. All rights reserved.</p>
+            <p style="margin-top: 8px;">
+                <a href="privacy-policy.html">Privacy Policy</a> &nbsp;|&nbsp;
+                <a href="terms.html">Terms of Use</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

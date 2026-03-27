@@ -1,0 +1,24 @@
+Slabr turns your PSA-graded sports cards into eBay listings in seconds.
+
+Scan a slab. Confirm the details. Post to eBay. That's it.
+
+HOW IT WORKS
+1. Import your PSA scan from your camera roll — or point your camera at any card
+2. Slabr reads the cert number, looks up every detail from PSA, and auto-fills your listing
+3. Set your price, confirm the category, and publish directly to eBay
+
+BUILT FOR SELLERS WHO MOVE VOLUME
+• Auto-generated eBay titles optimized for search
+• Photo uploads included — your scan becomes the listing image
+• Category auto-detection via eBay's taxonomy
+• Business policy integration applied automatically
+
+RAW CARDS TOO
+Point your camera at any ungraded card — select condition, set price, list it.
+
+TRACK YOUR INVENTORY
+• Dashboard with total value, active listings, and recent activity
+• Analytics with grade distribution, brand breakdown, and CSV export
+
+PRIVACY FIRST
+Your card data stays on your iPhone. No accounts, no cloud sync, no tracking.

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slabr — Privacy Policy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0F;
+            color: #E8E8ED;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .effective-date {
+            font-size: 14px;
+            color: #8E8E93;
+            margin-bottom: 40px;
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1C1C2E;
+        }
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4361EE;
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+        p {
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #C7C7CC;
+        }
+        ul {
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+        li {
+            font-size: 15px;
+            color: #C7C7CC;
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #1C1C2E;
+            color: #FFFFFF;
+            font-weight: 600;
+            border-bottom: 1px solid #2C2C3E;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1C1C2E;
+            color: #C7C7CC;
+        }
+        a {
+            color: #4361EE;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .highlight {
+            background: #1C1C2E;
+            border-left: 3px solid #4361EE;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight p {
+            margin-bottom: 0;
+            color: #E8E8ED;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid #1C1C2E;
+            font-size: 13px;
+            color: #636366;
+        }
+        .footer a {
+            color: #636366;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 32px 16px 60px; }
+            h1 { font-size: 26px; }
+            h2 { font-size: 18px; }
+            table { font-size: 13px; }
+            th, td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p class="effective-date">Effective: March 2026</p>
+
+        <div class="highlight">
+            <p>Slabr is a local-first app. Your card data stays on your iPhone. No accounts, no cloud sync, no tracking.</p>
+        </div>
+
+        <h2>What We Collect</h2>
+
+        <h3>Card Data</h3>
+        <p>Card metadata (player, year, brand, grade, cert number, price), photos, and listing details are stored locally on your device in Core Data with <code>FileProtectionType.complete</code> encryption. This data never leaves your device unless you publish a listing to eBay.</p>
+
+        <h3>Device Identifier</h3>
+        <p>A random UUID is generated on first launch and stored in the iOS Keychain. It is used to scope local data. It is not linked to your identity or Apple ID.</p>
+
+        <h3>Crash Data</h3>
+        <p>In release builds, Slabr uses Sentry to collect crash reports. These include stack traces and device information (model, OS version). No personally identifiable information, card data, credentials, or images are included. Crash reporting is disabled in debug builds.</p>
+
+        <h2>What We Do Not Collect</h2>
+        <ul>
+            <li>No analytics or usage tracking</li>
+            <li>No advertising identifiers</li>
+            <li>No location data</li>
+            <li>No contact information</li>
+            <li>No browsing or search history</li>
+            <li>No cross-app or cross-site tracking</li>
+        </ul>
+
+        <h2>Third-Party Services</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Purpose</th>
+                    <th>Data Sent</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>PSA (api.psacard.com)</td>
+                    <td>Card certification lookup</td>
+                    <td>Cert number via HTTPS</td>
+                </tr>
+                <tr>
+                    <td>eBay (api.ebay.com)</td>
+                    <td>Listing creation</td>
+                    <td>Card metadata, photos, pricing when you publish a listing</td>
+                </tr>
+                <tr>
+                    <td>Sentry</td>
+                    <td>Crash reporting</td>
+                    <td>Stack traces, device info. No PII.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>PSA credentials (if used) are transmitted to PSA over HTTPS and immediately cleared from memory. The resulting auth token is stored in the iOS Keychain.</p>
+        <p>eBay authentication uses <code>ASWebAuthenticationSession</code> (eBay-hosted login). Tokens are stored in the iOS Keychain. Listing data is sent to eBay only when you explicitly publish.</p>
+
+        <h2>Data Storage</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Location</th>
+                    <th>Encryption</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Card data &amp; images</td>
+                    <td>Core Data (on-device)</td>
+                    <td>FileProtectionType.complete</td>
+                </tr>
+                <tr>
+                    <td>Auth tokens (PSA, eBay)</td>
+                    <td>iOS Keychain</td>
+                    <td>Hardware-encrypted, device-only</td>
+                </tr>
+                <tr>
+                    <td>User preferences</td>
+                    <td>Core Data (on-device)</td>
+                    <td>FileProtectionType.complete</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Slabr does not operate backend servers. There is no cloud sync, no user accounts, and no server-side database.</p>
+
+        <h2>Camera</h2>
+        <p>The camera is used to scan PSA graded card labels and capture card photos. Camera frames are processed entirely on-device using Apple's Vision framework. No camera data is transmitted to any server. Camera access requires your explicit permission.</p>
+
+        <h2>Data Deletion</h2>
+        <p>Go to <strong>Settings &gt; Delete All Data</strong> to erase all local data, including card records, images, auth tokens, and preferences. Uninstalling the app also removes all data.</p>
+        <p>Data already sent to eBay (published listings, uploaded images) persists on eBay's servers per their retention policies. Deleting data in Slabr does not remove eBay listings.</p>
+
+        <h2>Children's Privacy</h2>
+        <p>Slabr does not knowingly collect data from children under 13. The app does not require account creation and stores no data on external servers.</p>
+
+        <h2>Changes to This Policy</h2>
+        <p>This policy may be updated as new features are added. Material changes will be communicated via app update release notes.</p>
+
+        <h2>Contact</h2>
+        <p>For privacy questions: <a href="mailto:support@exosource.com">support@exosource.com</a></p>
+
+        <div class="footer">
+            <p>&copy; 2026 ExoSource Media LLC. All rights reserved.</p>
+            <p style="margin-top: 8px;">
+                <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+                <a href="support.html">Support</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
