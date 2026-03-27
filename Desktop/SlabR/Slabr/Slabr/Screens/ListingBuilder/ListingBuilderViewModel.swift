@@ -14,6 +14,7 @@ final class ListingBuilderViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var priceText: String = ""
     @Published var priceError: String?
+    @Published var minimumOfferError: String?
     @Published var format: ListingFormat = .fixedPrice
     @Published var acceptBestOffer: Bool = false
     @Published var minimumOfferText: String = ""
@@ -67,7 +68,7 @@ final class ListingBuilderViewModel: ObservableObject {
     private static let maxPrice = Decimal(string: "99999.99")!
 
     var canPublish: Bool {
-        let baseValid = validatePrice() == nil && !title.isEmpty && title.count <= 80
+        let baseValid = validatePrice() == nil && validateMinimumOffer() == nil && !title.isEmpty && title.count <= 80
         if isRawCard { return baseValid && condition != nil }
         return baseValid
     }
@@ -87,8 +88,25 @@ final class ListingBuilderViewModel: ObservableObject {
         return nil
     }
 
+    /// Validates `minimumOfferText` against business rules: optional field, but if present
+    /// must be numeric, greater than $0.00, at most $99,999.99, at most 2 decimal places,
+    /// and less than the listing price. Returns a user-facing error message, or `nil` if valid.
+    func validateMinimumOffer() -> String? {
+        guard !minimumOfferText.isEmpty else { return nil }  // Optional field
+        guard let offer = Decimal(string: minimumOfferText) else { return "Enter a valid number." }
+        guard offer > 0 else { return "Minimum offer must be greater than $0.00." }
+        guard offer <= Self.maxPrice else { return "Offer cannot exceed $99,999.99." }
+        let decimalParts = minimumOfferText.split(separator: ".")
+        if decimalParts.count == 2, decimalParts[1].count > 2 { return "Offer can have at most 2 decimal places." }
+        if let price = Decimal(string: priceText), price > 0, offer >= price {
+            return "Minimum offer must be less than the listing price."
+        }
+        return nil
+    }
+
     func updatePriceValidation() {
         priceError = validatePrice()
+        minimumOfferError = validateMinimumOffer()
     }
 
     func loadThumbnail() {

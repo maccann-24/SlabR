@@ -197,21 +197,32 @@ struct ListingBuilderView: View {
                     .tint(.brandAccent)
 
                 if viewModel.acceptBestOffer {
-                    HStack {
-                        Text("Minimum offer")
-                            .font(.cardMeta)
-                            .foregroundColor(.labelSecondary)
-                        Spacer()
-                        HStack(spacing: Spacing.xs) {
-                            Text("$")
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        HStack {
+                            Text("Minimum offer")
                                 .font(.cardMeta)
                                 .foregroundColor(.labelSecondary)
-                            TextField("0.00", text: $viewModel.minimumOfferText)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .font(.cardTitle)
-                                .foregroundColor(.labelPrimary)
-                                .frame(width: 80)
+                            Spacer()
+                            HStack(spacing: Spacing.xs) {
+                                Text("$")
+                                    .font(.cardMeta)
+                                    .foregroundColor(.labelSecondary)
+                                TextField("0.00", text: $viewModel.minimumOfferText)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .font(.cardTitle)
+                                    .foregroundColor(.labelPrimary)
+                                    .frame(width: 80)
+                                    .onChange(of: viewModel.minimumOfferText) { _ in
+                                        viewModel.updatePriceValidation()
+                                    }
+                            }
+                        }
+
+                        if let error = viewModel.minimumOfferError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.negative)
                         }
                     }
                 }

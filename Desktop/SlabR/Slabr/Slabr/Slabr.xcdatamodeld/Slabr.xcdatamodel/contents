@@ -16,6 +16,9 @@
         <attribute name="setName" attributeType="String"/>
         <attribute name="year" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="listings" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ListingRecord" inverseName="card" inverseEntity="ListingRecord"/>
+        <fetchIndex name="byGrade">
+            <fetchIndexElement property="grade" type="Binary" order="ascending"/>
+        </fetchIndex>
     </entity>
     <entity name="ListingRecord" representedClassName="ListingRecord" syncable="YES" codeGenerationType="class">
         <attribute name="acceptBestOffer" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
