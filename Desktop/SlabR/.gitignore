@@ -1,0 +1,58 @@
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.build/
+
+# API Keys — NEVER commit these
+Configuration/Dev.xcconfig
+Configuration/Prod.xcconfig
+*.xcconfig
+!*.xcconfig.example
+
+# CocoaPods (if used)
+Pods/
+
+# Swift Package Manager
+.swiftpm/
+*.resolved
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+efl/
+.fseventsd
+
+# Credentials and secrets
+*.pem
+*.p12
+*.p8
+secrets/
+.env
+
+# Build artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Test results
+fastlane/test_output/
+
+# Large binary assets
+UI_Video_SlabR.mov
+
+# Internal documentation — do NOT expose on public repo
+docs/*.md
+docs/plans/
+docs/SLABR_*
+AppStore/IAP_SETUP.md
+AppStore/metadata/app_store_info.md
+AppStore/metadata/privacy_labels.md
+Slabr/Slabr/.full-review/
+!docs/.nojekyll
