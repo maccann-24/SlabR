@@ -20,6 +20,10 @@ final class ListingBuilderViewModel: ObservableObject {
     @Published var auctionDurationDays: Int = 7
     @Published var state: BuilderState = .editing
 
+    // Category
+    @Published var category: EbayCategory?
+    @Published var suggestedCategory: EbayCategory?
+
     // Read-only card fields
     let playerName: String
     let year: String
@@ -93,6 +97,34 @@ final class ListingBuilderViewModel: ObservableObject {
             let image = UIImage(data: data)
             await MainActor.run {
                 self?.thumbnailImage = image
+            }
+        }
+    }
+
+    /// Auto-detects the best eBay category from card metadata using the Taxonomy API.
+    /// Sets `suggestedCategory` on success; falls back to the default sports trading cards category.
+    func loadCategory() {
+        let query = EbayCategoryService.suggestFromCard(
+            playerName: playerName.isEmpty ? nil : playerName,
+            brand: brand.isEmpty ? nil : brand
+        )
+
+        Task {
+            do {
+                let suggestions = try await EbayCategoryService.suggestCategory(for: query)
+                if let best = suggestions.first {
+                    suggestedCategory = best
+                    // Only set category if user hasn't manually chosen one
+                    if category == nil {
+                        category = best
+                    }
+                }
+            } catch {
+                Log.builder.error("Category detection failed: \(error.localizedDescription, privacy: .public)")
+                suggestedCategory = EbayCategoryService.defaultCategory
+                if category == nil {
+                    category = EbayCategoryService.defaultCategory
+                }
             }
         }
     }
@@ -187,6 +219,7 @@ final class ListingBuilderViewModel: ObservableObject {
         request.grade = grade
         request.cardNumber = cardNumber.isEmpty ? nil : cardNumber
         request.format = ebayFormat
+        request.categoryId = category?.id ?? EbayCategoryService.defaultCategory.id
 
         Task {
             do {

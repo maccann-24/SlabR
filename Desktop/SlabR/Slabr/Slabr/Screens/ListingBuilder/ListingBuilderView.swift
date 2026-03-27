@@ -29,7 +29,10 @@ struct ListingBuilderView: View {
         }
         .padding(.top, Spacing.md)
         .background(Color.appBackground)
-        .task { viewModel.loadThumbnail() }
+        .task {
+            viewModel.loadThumbnail()
+            viewModel.loadCategory()
+        }
         .onDisappear {
             if case .editing = viewModel.state {
                 viewModel.saveDraft()
@@ -53,6 +56,7 @@ struct ListingBuilderView: View {
                 VStack(spacing: Spacing.cardGap) {
                     thumbnailSection
                     titleSection
+                    categorySection
                     priceSection
                     formatSection
 
@@ -111,6 +115,17 @@ struct ListingBuilderView: View {
                     .font(.caption)
                     .foregroundColor(viewModel.title.count > 80 ? .negative : .labelSecondary)
             }
+        }
+    }
+
+    // MARK: - Category
+
+    private var categorySection: some View {
+        CardSection(title: "Category") {
+            CategorySelector(
+                selectedCategory: $viewModel.category,
+                suggestedCategory: viewModel.suggestedCategory
+            )
         }
     }
 

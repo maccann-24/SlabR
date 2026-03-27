@@ -20,6 +20,9 @@ final class RealEbayService: EbayServiceProtocol {
         case noOfferId
         case noListingId
         case networkError(Error)
+        case missingFulfillmentPolicy
+        case missingReturnPolicy
+        case missingPaymentPolicy
 
         var errorDescription: String? {
             switch self {
@@ -37,9 +40,26 @@ final class RealEbayService: EbayServiceProtocol {
                 return "eBay did not return a listing ID."
             case .networkError(let error):
                 return "Network error: \(error.localizedDescription)"
+            case .missingFulfillmentPolicy:
+                return "No shipping policy found. Create one in eBay Seller Hub before listing."
+            case .missingReturnPolicy:
+                return "No return policy found. Create one in eBay Seller Hub before listing."
+            case .missingPaymentPolicy:
+                return "No payment policy found. Create one in eBay Seller Hub before listing."
             }
         }
     }
+
+    // MARK: - Business Policy Cache
+
+    /// Cached business policy IDs. Checked once per app session to avoid redundant API calls.
+    private struct BusinessPolicies {
+        let fulfillmentPolicyId: String
+        let returnPolicyId: String
+        let paymentPolicyId: String
+    }
+
+    private static var cachedPolicies: BusinessPolicies?
 
     // MARK: - EbayServiceProtocol
 
@@ -54,7 +74,10 @@ final class RealEbayService: EbayServiceProtocol {
             imageURL = try await EbayImageService.uploadImage(imageData)
         }
 
-        // Step 2: Create inventory item
+        // Step 2: Check business policies (cached after first call)
+        let policies = try await checkBusinessPolicies(token: token, baseURL: baseURL)
+
+        // Step 3: Create inventory item
         let sku = "SLABR-\(UUID().uuidString)"
         Log.ebay.info("Creating inventory item: \(sku, privacy: .public)")
         try await createInventoryItem(
@@ -65,16 +88,17 @@ final class RealEbayService: EbayServiceProtocol {
             baseURL: baseURL
         )
 
-        // Step 3: Create offer
+        // Step 4: Create offer with business policy IDs
         Log.ebay.info("Creating offer for SKU: \(sku, privacy: .public)")
         let offerId = try await createOffer(
             sku: sku,
             request: request,
+            policies: policies,
             token: token,
             baseURL: baseURL
         )
 
-        // Step 4: Publish offer
+        // Step 5: Publish offer
         Log.ebay.info("Publishing offer: \(offerId, privacy: .public)")
         let listingId = try await publishOffer(
             offerId: offerId,
@@ -180,10 +204,12 @@ final class RealEbayService: EbayServiceProtocol {
     // MARK: - Offer
 
     /// Creates an offer via `POST /sell/inventory/v1/offer`.
+    /// Includes business policy IDs (fulfillment, return, payment) validated in the pre-check step.
     /// Returns the offer ID.
     private func createOffer(
         sku: String,
         request: ListingPublishRequest,
+        policies: BusinessPolicies,
         token: String,
         baseURL: String
     ) async throws -> String {
@@ -203,7 +229,12 @@ final class RealEbayService: EbayServiceProtocol {
             ],
             "categoryId": request.categoryId,
             "listingDescription": request.description ?? "",
-            "availableQuantity": 1
+            "availableQuantity": 1,
+            "listingPolicies": [
+                "fulfillmentPolicyId": policies.fulfillmentPolicyId,
+                "returnPolicyId": policies.returnPolicyId,
+                "paymentPolicyId": policies.paymentPolicyId
+            ]
         ]
 
         let jsonData = try JSONSerialization.data(withJSONObject: body)
@@ -270,6 +301,94 @@ final class RealEbayService: EbayServiceProtocol {
         }
 
         return listingId
+    }
+
+    // MARK: - Business Policy Pre-Check
+
+    /// Fetches required eBay business policies (fulfillment, return, payment).
+    /// Returns cached results after the first successful check per session.
+    /// Throws descriptive errors if any required policy type is missing.
+    private func checkBusinessPolicies(
+        token: String,
+        baseURL: String
+    ) async throws -> BusinessPolicies {
+        if let cached = Self.cachedPolicies {
+            return cached
+        }
+
+        Log.ebay.info("Checking eBay business policies")
+
+        let fulfillmentId = try await fetchFirstPolicyId(
+            endpoint: "\(baseURL)/sell/account/v1/fulfillment_policy?marketplace_id=EBAY_US",
+            policyKey: "fulfillmentPolicies",
+            idKey: "fulfillmentPolicyId",
+            token: token,
+            missingError: .missingFulfillmentPolicy
+        )
+
+        let returnId = try await fetchFirstPolicyId(
+            endpoint: "\(baseURL)/sell/account/v1/return_policy?marketplace_id=EBAY_US",
+            policyKey: "returnPolicies",
+            idKey: "returnPolicyId",
+            token: token,
+            missingError: .missingReturnPolicy
+        )
+
+        let paymentId = try await fetchFirstPolicyId(
+            endpoint: "\(baseURL)/sell/account/v1/payment_policy?marketplace_id=EBAY_US",
+            policyKey: "paymentPolicies",
+            idKey: "paymentPolicyId",
+            token: token,
+            missingError: .missingPaymentPolicy
+        )
+
+        let policies = BusinessPolicies(
+            fulfillmentPolicyId: fulfillmentId,
+            returnPolicyId: returnId,
+            paymentPolicyId: paymentId
+        )
+
+        Self.cachedPolicies = policies
+        Log.ebay.info("Business policies verified — fulfillment: \(fulfillmentId, privacy: .public), return: \(returnId, privacy: .public), payment: \(paymentId, privacy: .public)")
+        return policies
+    }
+
+    /// Fetches a single policy type and returns the first policy's ID.
+    /// Throws the specified error if no policies exist for that type.
+    private func fetchFirstPolicyId(
+        endpoint: String,
+        policyKey: String,
+        idKey: String,
+        token: String,
+        missingError: InventoryError
+    ) async throws -> String {
+        guard let url = URL(string: endpoint) else {
+            throw InventoryError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let (data, response) = try await performRequest(request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let detail = String(data: data, encoding: .utf8) ?? "Unknown error"
+            Log.ebay.error("Policy check failed for \(policyKey, privacy: .public) HTTP \(statusCode): \(detail, privacy: .public)")
+            throw missingError
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let policies = json[policyKey] as? [[String: Any]],
+              let firstPolicy = policies.first,
+              let policyId = firstPolicy[idKey] as? String else {
+            Log.ebay.warning("No \(policyKey, privacy: .public) found on eBay account")
+            throw missingError
+        }
+
+        return policyId
     }
 
     // MARK: - Helpers
