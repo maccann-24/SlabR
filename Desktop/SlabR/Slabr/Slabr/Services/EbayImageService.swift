@@ -123,7 +123,7 @@ enum EbayImageService {
     }
 
     /// Extracts the `<FullURL>` value from the eBay XML response.
-    private static func extractFullURL(from xml: String) -> String? {
+    internal static func extractFullURL(from xml: String) -> String? {
         guard let startRange = xml.range(of: "<FullURL>"),
               let endRange = xml.range(of: "</FullURL>") else {
             return nil

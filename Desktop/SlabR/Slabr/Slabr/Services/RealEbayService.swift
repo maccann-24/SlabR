@@ -407,7 +407,7 @@ final class RealEbayService: EbayServiceProtocol {
     }
 
     /// Maps the app's condition string to eBay's condition enum and optional description.
-    private func mapConditionToEbay(
+    internal func mapConditionToEbay(
         _ condition: String?,
         grade: String?
     ) -> (condition: String, description: String?) {

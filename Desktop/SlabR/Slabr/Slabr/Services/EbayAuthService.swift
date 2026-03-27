@@ -86,9 +86,6 @@ final class EbayAuthService: NSObject {
             throw EbayAuthError.missingConfiguration("URL_SCHEME")
         }
 
-        let encodedScopes = scopes.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? scopes
-        let encodedRuName = ruName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ruName
-
         // PKCE (RFC 7636)
         let codeVerifier = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(from: codeVerifier)
@@ -98,14 +95,14 @@ final class EbayAuthService: NSObject {
         let state = UUID().uuidString
         currentState = state
 
-        let authURLString = "\(env.authBaseURL)/oauth2/authorize"
-            + "?client_id=\(clientId)"
-            + "&redirect_uri=\(encodedRuName)"
-            + "&response_type=code"
-            + "&scope=\(encodedScopes)"
-            + "&code_challenge=\(codeChallenge)"
-            + "&code_challenge_method=S256"
-            + "&state=\(state)"
+        let authURLString = Self.buildAuthorizationURL(
+            clientId: clientId,
+            ruName: ruName,
+            scopes: scopes,
+            codeChallenge: codeChallenge,
+            state: state,
+            authBaseURL: env.authBaseURL
+        )
 
         guard let authURL = URL(string: authURLString) else {
             throw EbayAuthError.authenticationFailed("Invalid authorization URL")
@@ -327,10 +324,31 @@ final class EbayAuthService: NSObject {
         )
     }
 
-    // MARK: - Private — PKCE (RFC 7636)
+    // MARK: - Internal — URL Construction (testable)
+
+    /// Builds the full eBay OAuth authorization URL with PKCE and state parameters.
+    /// Extracted from `authenticate()` so it can be unit-tested without triggering the real flow.
+    nonisolated internal static func buildAuthorizationURL(
+        clientId: String, ruName: String, scopes: String,
+        codeChallenge: String, state: String, authBaseURL: String
+    ) -> String {
+        let encodedScopes = scopes.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? scopes
+        let encodedRuName = ruName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ruName
+
+        return "\(authBaseURL)/oauth2/authorize"
+            + "?client_id=\(clientId)"
+            + "&redirect_uri=\(encodedRuName)"
+            + "&response_type=code"
+            + "&scope=\(encodedScopes)"
+            + "&code_challenge=\(codeChallenge)"
+            + "&code_challenge_method=S256"
+            + "&state=\(state)"
+    }
+
+    // MARK: - Internal — PKCE (RFC 7636)
 
     /// Generates a cryptographically random code verifier (43-128 unreserved characters).
-    private func generateCodeVerifier() -> String {
+    nonisolated internal func generateCodeVerifier() -> String {
         var buffer = [UInt8](repeating: 0, count: 32)
         _ = SecRandomCopyBytes(kSecRandomDefault, buffer.count, &buffer)
         return Data(buffer).base64EncodedString()
@@ -340,7 +358,7 @@ final class EbayAuthService: NSObject {
     }
 
     /// Produces the S256 code challenge: Base64-URL-encoded SHA-256 of the verifier.
-    private func generateCodeChallenge(from verifier: String) -> String {
+    nonisolated internal func generateCodeChallenge(from verifier: String) -> String {
         let hash = SHA256.hash(data: Data(verifier.utf8))
         return Data(hash).base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
